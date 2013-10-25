@@ -13,13 +13,16 @@
 
         //var data = [1, 2, 3, 5, 8, 13, 21];
         var data = [
-            {value: 1},
-            {value: 2},
-            {value: 3},
-            {value: 5},
-            {value: 8},
-            {value: 13},
-            {value: 21}
+            {radius: 1},
+            {radius: 2},
+            {radius: 3},
+            {radius: 5},
+            {radius: 8},
+            {radius: 13},
+            {radius: 21},
+            {radius: 34},
+            {radius: 55},
+            {radius: 89}
         ];
 
         var svg = d3.select('body').selectAll('svg');
@@ -28,11 +31,11 @@
             .data(data)
                 .enter()
                     .append("circle")
-                    .attr("r", function(d){ return d.value;});
+                    .attr("r", function(d){ return d.radius;});
 
         var force = d3.layout.force()
             .nodes(data)
-            .charge(-400)
+            .charge(charge)
             .size([970, 540])
             .on("tick", tick)
             .start();
@@ -43,6 +46,11 @@
             }).attr("cy", function(d) {
                 return d.y;
             });
+        }
+
+        function charge(d){
+            var diameter = d.radius * 2;
+            return -(diameter * 8);
         }
 
     </script>
