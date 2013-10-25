@@ -59,55 +59,6 @@
       ]}
     ].map(party);
 
-    data.speakers = {
-      "AL GREEN": {name: "Al Green", title: "U.S. representative, Texas"},
-      "ALEX SCHRIVER": {name: "Alex Schriver", title: "College Republican National Committee chairman"},
-      "ALLYSON SCHWARTZ": {name: "Allyson Y. Schwartz", title: "U.S. representative, Pennsylvania"},
-      "ANDY BARR": {name: "Andy Barr", title: "Congressional candidate, Kentucky"},
-      "ANN ROMNEY": {name: "Ann Romney", title: "Wife of Mitt Romney"},
-      "ANTHONY FOXX": {name: "Anthony R. Foxx", title: "Mayor of Charlotte, N.C."},
-      "ANTONIO VILLARAIGOSA": {name: "Antonio R. Villaraigosa", title: "Mayor of Los Angeles"},
-      "ARNE DUNCAN": {name: "Arne Duncan", title: "U.S. secretary of education"},
-      "ARTUR DAVIS": {name: "Artur Davis", title: "U.S. representative, Alabama"},
-      "AUSTIN LIGON": {name: "Austin Ligon", title: "Co-Founder of CarMax Inc."},
-      "BARBARA BUSH": {name: "Barbara Bush", title: "Former first lady"},
-      "BARBARA COMSTOCK": {name: "Barbara Comstock", title: "State representative, Virginia"},
-      "BARACK OBAMA": {name: "Barack Obama", title: "President of the United States"},
-      "BARBARA LEE": {name: "Barbara Lee", title: "U.S. representative, California"},
-      "BARBARA MIKULSKI": {name: "Barbara A. Mikulski", title: "U.S. senator, Maryland"},
-      "BARNEY FRANK": {name: "Barney Frank", title: "U.S. representative, Massachusetts"},
-      "BEAU BIDEN": {name: "Beau Biden", title: "Attorney general of Delaware and son of the vice president"},
-      "BENITA VELIZ": {name: "Benita Veliz", title: "Dream Act Activist"},
-      "BEV GRAY": {name: "Bev Gray", title: "Small-business owner"},
-      "BEV PERDUE": {name: "Bev Perdue", title: "Governor of North Carolina"},
-      "BILL CLINTON": {name: "Bill Clinton", title: "42nd president of the United States"},
-      "BOB BUCKHORN": {name: "Bob Buckhorn", title: "Mayor of Tampa"},
-      "BOB KING": {name: "Bob King", title: "President of the United Auto Workers"},
-      "BOB MCDONNELL": {name: "Bob McDonnell", title: "Governor of Virginia"},
-      "BRIAN SANDOVAL": {name: "Brian Sandoval", title: "Governor of Nevada"},
-      "BRIAN SCHWEITZER": {name: "Brian Schweitzer", title: "Governor of Montana"},
-      "CALLISTA GINGRICH": {name: "Callista Gingrich", title: "Wife of Newt Gingrich"},
-      "CAROL WELLS": {name: "Carol Wells", title: "Wife of Ron Paul"},
-      "CAROLINE KENNEDY": {name: "Caroline Kennedy", title: "Author and attorney"},
-      "CAROLYN MALONEY": {name: "Carolyn B. Maloney", title: "U.S. representative, New York"},
-      "CATHY MCMORRIS RODGERS": {name: "Cathy McMorris Rodgers", title: "U.S. representative, Washington"},
-      "CECILE RICHARDS": {name: "Cecile Richards", title: "President of Planned Parenthood Federation of America"},
-      "CHARLES SCHUMER": {name: "Charles E. Schumer", title: "U.S. senator, New York"},
-      "CHARLIE CRIST": {name: "Charlie Crist", title: "Former governor of Florida"},
-      "CHARLIE GONZALEZ": {name: "Charlie Gonzalez", title: "U.S. representative, Texas"},
-      "CHRIS CHRISTIE": {name: "Chris Christie", title: "Governor of New Jersey"},
-      "CHRIS DEVON YOUNG": {name: "Chris Devlin-Young", title: "Paralympic ski champion"},
-      "CHRIS FUSSNER": {name: "Chris Fussner", title: "Republicans Abroad chairman"},
-      "CHRISTOPHER VAN HOLLEN": {name: "Chris Van Hollen", title: "U.S. representative, Maryland"},
-      "CINDY HEWITT": {name: "Cindy Hewitt", title: "Former employee at a company controlled by Bain Capital"},
-      "CLAUDIA KENNEDY": {name: "Claudia J. Kennedy", title: "Lieutenant General (Army, retired)"},
-      "CLINT EASTWOOD": {name: "Clint Eastwood", title: "Actor, film director"},
-      "CONDOLEEZZA RICE": {name: "Condoleezza Rice", title: "Former Secretary of State"},
-      "CORY BOOKER": {name: "Cory Booker", title: "Mayor of Newark"},
-      "CRAIG ROBINSON": {name: "Craig Robinson", title: "Brother of Michelle Obama"},
-      "CRAIG ROMNEY": {name: "Craig Romney", title: "Son of Mitt Romney"},
-      "CRISTINA SARALEGUI": {name: "Cristina Saralegui", title: "Talk show host"}
-    };
 
     data.topics = [
       {name: "American dream", re: /\b(American dream)\b/gi, x: 558, y: 181},
@@ -213,25 +164,18 @@
       topic.cy = topic.y;
 
       topic.parties = data.parties.map(function(party) {
-        var count = 0,
-            mentions = [];
+        var count = 0;
 
         party.sections.forEach(function(section) {
           var text = section.speech.text.substring(section.i, section.j), match;
           topic.re.lastIndex = 0;
           while (match = topic.re.exec(text)) {
             ++count;
-            mentions.push({
-              topic: topic,
-              section: section,
-              i: section.i + match.index,
-              j: section.i + topic.re.lastIndex
-            });
           }
         });
 
         topic.count += count = count / party.wordCount * 25e3;
-        return {count: count, mentions: mentions};
+        return {count: count};
       });
 
       return topic;
@@ -291,7 +235,7 @@
 
       updateNodes();
       updateLabels();
-      //updateArrows();
+
       tick({alpha: 0}); // synchronous update
     }
 
@@ -394,140 +338,6 @@
       label.each(function(d) { d.dy = this.getBoundingClientRect().height; });
     }
 
-    // Update the active topic.
-    function updateActiveTopic(topic) {
-      return;
-      d3.selectAll(".g-head").attr("class", topic ? "g-head g-has-topic" : "g-head g-hasnt-topic");
-      if (activeTopic = topic) {
-        node.classed("g-selected", function(d) { return d === topic; });
-        updateMentions(findMentions(topic));
-        d3.selectAll(".g-head a").text(topic.name);
-        d3.select(".g-democrat .g-head span.g-count").text(formatCount(topic.parties[0].count));
-        d3.select(".g-republican .g-head span.g-count").text(formatCount(topic.parties[1].count));
-      } else {
-        node.classed("g-selected", false);
-        updateMentions(sampleMentions());
-        d3.selectAll(".g-head a").text("various topics");
-        d3.selectAll(".g-head span.g-count").text("some number of");
-      }
-    }
-
-    // Update displayed excerpts.
-    function updateMentions(mentions) {
-      return;
-      var column = d3.selectAll(".g-mentions")
-          .data(mentions);
-
-      column.select(".g-truncated")
-          .style("display", function(d) { return d.truncated ? "block" : null; });
-
-      var mention = column.selectAll(".g-mention")
-          .data(groupMentionsBySpeaker, function(d) { return d.key; });
-
-      mention.exit().remove();
-
-      mention.selectAll("p")
-          .remove();
-
-      var mentionEnter = mention.enter().insert("div", ".g-truncated")
-          .attr("class", "g-mention");
-
-      mentionEnter.append("div")
-          .attr("class", "g-speaker")
-          .text(function(d) { var s = data.speakers[d.key]; return s ? s.name : d.key; });
-
-      mentionEnter.append("div")
-          .attr("class", "g-speaker-title")
-          .text(function(d) { var s = data.speakers[d.key]; return s && s.title; });
-
-      mention
-          .sort(function(a, b) { return b.values.length - a.values.length; });
-
-      var p = mention.selectAll("p")
-          .data(function(d) { return d.values; })
-        .enter().append("p")
-          .html(function(d) { return d.section.speech.text.substring(d.start, d.end).replace(d.topic.re, "<a>$1</a>"); });
-
-      if (activeTopic) {
-        p.attr("class", "g-hover");
-      } else {
-        p.each(function(d) {
-          d3.select(this).selectAll("a")
-              .datum(d.topic)
-              .attr("href", "#" + encodeURIComponent(d.topic.name))
-              .call(linkTopic);
-        });
-      }
-    }
-
-
-
-
-
-    // Group mentions by speaker, collapse overlapping excerpts.
-    function groupMentionsBySpeaker(mentions) {
-      return d3.nest()
-          .key(function(d) { return d.section.speaker; })
-          .rollup(collapseMentions)
-          .entries(mentions);
-    }
-
-    // Given an array of mentions, computes the start and end point of the context
-    // excerpt, and then collapses any overlapping excerpts.
-    function collapseMentions(mentions) {
-      var sentenceRe = /([!?.)]+)\s+/g, // sentence splitting requires NLP
-          i,
-          n = mentions.length,
-          d0,
-          d1;
-
-      // First compute the excerpt contexts.
-      for (i = 0; i < n; ++i) {
-        d0 = mentions[i];
-        d0.start = excerptStart(d0);
-        d0.end = excerptEnd(d0);
-      }
-
-      // Then collapse any overlapping excerpts (from the same speech).
-      for (i = 1, d1 = mentions[0]; i < n; ++i) {
-        d0 = d1;
-        d1 = mentions[i];
-        if (d1.section.speech.id === d0.section.speech.id
-            && d1.start >= d0.start
-            && d1.start < d0.end) {
-          d1.start = -1;
-          d0.end = d1.end;
-          d1 = d0;
-        }
-      }
-
-      // Returns the start index of the excerpt for the specified mention.
-      function excerptStart(mention) {
-        var i = sentenceRe.lastIndex = Math.max(mention.section.i, mention.i - 80), match;
-        while (match = sentenceRe.exec(mention.section.speech.text)) {
-          if (match.index < mention.i - 20) return match.index + match[0].length;
-          if (i <= mention.section.i) break;
-          sentenceRe.lastIndex = i = Math.max(mention.section.i, i - 20);
-        }
-        return mention.section.i;
-      }
-
-      // Returns the end index of the excerpt for the specified mention.
-      function excerptEnd(mention) {
-        var i = mention.section.j, match;
-        sentenceRe.lastIndex = mention.j + 40;
-        match = sentenceRe.exec(mention.section.speech.text);
-        return match ? Math.min(match.index + match[1].length, i) : i;
-      }
-
-      return mentions.filter(function(d) { return d.start >= 0; });
-    }
-
-    // Orders mentions chronologically: by speech and position within speech.
-    function orderMentions(a, b) {
-      return a.section.speech.id - b.section.speech.id || a.i - b.i;
-    }
-
     // Assign event handlers to topic links.
     function linkTopic(a) {
       a   .on("click", click)
@@ -535,27 +345,6 @@
           .on("mouseout", mouseout);
     }
 
-    // Returns the topic matching the specified name, approximately.
-    // If no matching topic is found, returns undefined.
-    function findTopic(name) {
-      for (var i = 0, n = data.topics.length, t; i < n; ++i) {
-        if ((t = data.topics[i]).name === name || new RegExp("^" + (t = data.topics[i]).re.source + "$", "i").test(name)) {
-          return t;
-        }
-      }
-    }
-
-    // Returns the topic matching the specified name, approximately.
-    // If no matching topic is found, a new one is created.
-    function findOrAddTopic(name) {
-      var topic = findTopic(name);
-      if (!topic) {
-        topic = data.topic(name.substring(0, 1).toUpperCase() + name.substring(1));
-        topic.y = 0;
-        updateTopics(data.topics);
-      }
-      return topic;
-    }
 
     // Simulate forces and update node and label positions on tick.
     function tick(e) {
@@ -633,20 +422,6 @@
         k = (1 - Math.cos(t1 / 2)) / 2;
       }
       return k;
-    }
-
-    // Update the active topic on hashchange, perhaps creating a new topic.
-    function hashchange() {
-      var name = decodeURIComponent(location.hash.substring(1)).trim();
-      updateActiveTopic(name && name != "!" ? findOrAddTopic(name) : null);
-    }
-
-    // Trigger a hashchange on submit.
-    function submit() {
-      var name = this.search.value.trim();
-      location.hash = name ? encodeURIComponent(name) : "!";
-      this.search.value = "";
-      d3.event.preventDefault();
     }
 
     // Clear the active topic when clicking on the chart background.
