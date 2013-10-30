@@ -85,7 +85,9 @@
             .range([0, 60]);
 
         data.forEach(function(d) {
-          d.radius = scale(d.volume);
+            d.radius = scale(d.volume);
+            d.proportion = fraction(d.groups[0].volume, d.groups[1].volume);
+            d.bias = .5 - Math.max(.1, Math.min(.9, d.proportion));
         });
 
         var force = d3.layout.force()
@@ -95,46 +97,100 @@
             .on("tick", tick)
             .start();
 
-
-        var circles = svg.selectAll("circle")
+        var circleAnchors = svg.selectAll(".circle-anchor")
             .data(data)
                 .enter()
-                    .append("circle")
-                    .attr("fill", '#333')
-                    .attr("r", function(d){ return d.radius;});
+                    .append('a')
+                    .attr('class', 'circle-anchor');
 
-        var labels = svg.selectAll("text")
-            .data(data).
-                enter()
-                    .append("text")
-                    .text(function(d) { return d.name; })
-                    .attr('fill', '#fff')
-                    .attr('font-size', function(d){
-                        return Math.max(d.volume, 14);
-                    })
-                    .each(function(d) {
-                        d.labelWidth = this.getBoundingClientRect().width;
-                    });
+        var groupA = circleAnchors.append("g")
+            .attr("class", "g-groupA");
+
+        groupA.append("clipPath")
+            .attr("id", function(d) { return "g-clip-groupA-" + d.id; })
+            .append("rect")
+            .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
+            .attr("x", function(d) { return -d.radius - 4 /*clipping*/; })
+            .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
+            .attr("width", function(d) { return 2 * d.radius * d.proportion + 4 /*clipping*/; });
+
+        var circles = groupA.append("circle")
+            .attr("clip-path", function(d) { return "url(#g-clip-groupA-" + d.id + ")"; })
+            .attr("fill", '#00f')
+            .attr("r", function(d){ return d.radius;});
+
+        var groupB = circleAnchors.append("g")
+            .attr("class", "g-groupB");
+
+        groupB.append("clipPath")
+            .attr("id", function(d) { return "g-clip-groupB-" + d.id; })
+            .append("rect")
+            .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
+            .attr("x", function(d) { return -d.radius + 2 * d.radius * d.proportion; })
+            .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
+            .attr("width", function(d) { return 2 * d.radius; });
+
+        var circles = groupB.append("circle")
+            .attr("clip-path", function(d) { return "url(#g-clip-groupB-" + d.id + ")"; })
+            .attr("fill", '#f00')
+            .attr("r", function(d){ return d.radius;});
+
+        // var circles = svg.selectAll("circle")
+        //     .data(data)
+        //         .enter()
+        //             .append("circle")
+        //             .attr("fill", '#333')
+        //             .attr("r", function(d){ return d.radius;});
+
+        // var labels = svg.selectAll("text")
+        //     .data(data).
+        //         enter()
+        //             .append("text")
+        //             .text(function(d) { return d.name; })
+        //             .attr('fill', '#fff')
+        //             .attr('font-size', function(d){
+        //                 return Math.max(d.volume, 14);
+        //             })
+        //             .each(function(d) {
+        //                 d.labelWidth = this.getBoundingClientRect().width;
+        //             });
 
         function tick() {
-            circles.attr("cx", function(d) {
-                return d.x;
-            }).attr("cy", function(d) {
-                return d.y;
-            });
+            circleAnchors
+                .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
-            labels
-                .attr("x", function(d) {
-                    return (d.x - (d.labelWidth / 2)) + "px";
-                })
-                .attr("y", function(d) {
-                    return d.y + "px";
-                });
+            // circles.attr("cx", function(d) {
+            //     return d.x;
+            // }).attr("cy", function(d) {
+            //     return d.y;
+            // });
+
+            // labels
+            //     .attr("x", function(d) {
+            //         return (d.x - (d.labelWidth / 2)) + "px";
+            //     })
+            //     .attr("y", function(d) {
+            //         return d.y + "px";
+            //     });
         }
 
         function charge(d){
             var diameter = d.volume * 2;
             return -(diameter * 16);
+        }
+
+        // Given two quantities a and b, returns the fraction to split the circle a + b.
+        function fraction(a, b) {
+          var k = a / (a + b);
+          if (k > 0 && k < 1) {
+            var t0, t1 = Math.pow(12 * k * Math.PI, 1 / 3);
+            for (var i = 0; i < 10; ++i) { // Solve for theta numerically.
+              t0 = t1;
+              t1 = (Math.sin(t0) - t0 * Math.cos(t0) + 2 * k * Math.PI) / (1 - Math.cos(t0));
+            }
+            k = (1 - Math.cos(t1 / 2)) / 2;
+          }
+          return k;
         }
 
     </script>
