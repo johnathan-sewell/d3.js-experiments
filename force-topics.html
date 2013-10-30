@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+</head>
+<body>
+
+    <svg width="970" height="540"></svg>
+
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+    <script>
+
+        //var data = [1, 2, 3, 5, 8, 13, 21];
+        var data = [
+            {radius: 1},
+            {radius: 2},
+            {radius: 3},
+            {radius: 5},
+            {radius: 8},
+            {radius: 13},
+            {radius: 21},
+            {radius: 34},
+            {radius: 55},
+            {radius: 89}
+        ];
+
+        var svg = d3.select('body').selectAll('svg');
+
+        var circles = svg.selectAll("circle")
+            .data(data)
+                .enter()
+                    .append("circle")
+                    .attr("r", function(d){ return d.radius;});
+
+        var force = d3.layout.force()
+            .nodes(data)
+            .gravity(.1)
+            .charge(charge)
+            .size([970, 540])
+            .on("tick", tick)
+            .start();
+
+        function tick(e) {
+          circles
+            .each(bias(e.alpha * 1))
+            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+            // circles.attr("cx", function(d) {
+            //     return d.x;
+            // }).attr("cy", function(d) {
+            //     return d.y;
+            // });
+        }
+
+        // A left-right bias causing topics to orient by party preference.
+        function bias(alpha) {
+          return function(d) {
+            d.x += Math.random() * alpha;
+          };
+        }
+
+        function charge(d){
+            var diameter = d.radius * 2;
+            return -(diameter * 8);
+        }
+
+    </script>
+
+</body>
+</html>

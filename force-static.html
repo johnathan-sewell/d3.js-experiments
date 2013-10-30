@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+</head>
+<body>
+
+    <svg width="970" height="540"></svg>
+
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+    <script>
+
+        //var data = [1, 2, 3, 5, 8, 13, 21];
+        var data = [
+            {radius: 1},
+            {radius: 2},
+            {radius: 3},
+            {radius: 5},
+            {radius: 8},
+            {radius: 13},
+            {radius: 21},
+            {radius: 34},
+            {radius: 55},
+            {radius: 89}
+        ];
+
+        var svg = d3.select('body').selectAll('svg');
+
+        var circles = svg.selectAll("circle")
+            .data(data)
+                .enter()
+                    .append("circle")
+                    .attr("r", function(d){ return d.radius;});
+
+        var force = d3.layout.force()
+            .nodes(data)
+            .charge(charge)
+            .size([970, 540])
+            .start();
+
+        for (var i = 100; i > 0; --i) force.tick();
+        force.stop();
+
+
+        circles.attr("cx", function(d) {
+            return d.x;
+        }).attr("cy", function(d) {
+            return d.y;
+        });
+
+        function charge(d){
+            var diameter = d.radius * 2;
+            return -(diameter * 8);
+        }
+
+    </script>
+
+</body>
+</html>

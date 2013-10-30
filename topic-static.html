@@ -58,17 +58,17 @@ data.topics = [{
     id: 5,
     name: "Gonna Buy",
     count: 21,
-    groups: [{ count: 2 }, { count: 13 }]
+    groups: [{ count: 8 }, { count: 13 }]
   },{
     id: 6,
     name: "Price",
     count: 21,
-    groups: [{ count: 13 }, { count: 2 }]
+    groups: [{ count: 13 }, { count: 8 }]
   },{
     id: 7,
     name: "Quality",
     count: 13,
-    groups: [{ count: 7 }, { count: 2 }],
+    groups: [{ count: 7 }, { count: 6 }],
   },{
     id: 8,
     name: "Style",
@@ -78,7 +78,7 @@ data.topics = [{
     id: 9,
     name: "Finance",
     count: 8,
-    groups: [{ count: 4 }, { count: 0 }],
+    groups: [{ count: 4 }, { count: 4 }],
   },{
     id: 10,
     name: "Torque",
@@ -89,12 +89,17 @@ data.topics = [{
     name: "Stereo",
     count: 5,
     groups: [{ count: 0 }, { count: 5 }],
+  },{
+    id: 12,
+    name: "Tyres",
+    count: 21,
+    groups: [{ count: 21 }, { count: 0 }],
   }
 ];
 
 function charge(d){
     var diameter = d.radius * 2;
-    return -(diameter * 10);
+    return -(diameter * 12);
 }
 
 (function() {
@@ -102,8 +107,7 @@ function charge(d){
 var width = 970,
     height = 540;
 
-var collisionPadding = 4,
-    clipPadding = 4,
+var clipPadding = 4,
     minRadius = 16, // minimum collision radius
     maxRadius = 65; // also determines collision search radius
 
@@ -116,6 +120,7 @@ data.topics.forEach(function(d) {
   d.proportion = fraction(d.groups[0].count, d.groups[1].count);
   if (isNaN(d.proportion)) d.proportion = .5;
   if (isNaN(d.x)) d.x = (1 - d.proportion) * width + Math.random();
+
   d.bias = .5 - Math.max(.1, Math.min(.9, d.proportion));
 });
 
@@ -130,10 +135,13 @@ var force = d3.layout.force()
     .nodes(data.topics)
     .start();
 
-updateNodes();
-//updateLabels();
+// for (var i = 200; i > 0; --i) force.tick();
+// force.stop();
 
-// Update the displayed nodes.
+updateNodes();
+updateLabels();
+renderStaticLayout();
+
 function updateNodes() {
   node = node.data(data.topics, function(d) { return d.name; });
 
@@ -182,7 +190,6 @@ function updateNodes() {
       .attr("r", function(d) { return d.radius; });
 }
 
-// Update the displayed node labels.
 function updateLabels() {
   label = label.data(data.topics, function(d) { return d.name; });
 
@@ -194,33 +201,61 @@ function updateLabels() {
       .attr("class", "g-name")
       .text(function(d) { return d.name; });
 
-  labelEnter.append("div")
-      .attr("class", "g-value")
-      .text(function(d) { return d.groups[0].count + " - " + d.groups[1].count; });
-
   label
       .style("font-size", function(d) { return d.radius / 2.5 + "px"; })
+      .style("font-family", 'sans-serif');
+
+  // Create a temporary span to compute the true text width.
+    label.append("span")
+      .text(function(d) { return d.name;})
+      .style("font-size", function(d) { return d.radius / 2.5 + "px"; })
       .style("font-family", 'sans-serif')
-      .style("width", function(d) { return (d.radius * 2) + "px"; });
+      .each(function(d) {
+          d.dx = this.getBoundingClientRect().width;
+      })
+      .remove();
+  // Compute the height of labels when wrapped.
+  label.each(function(d) { d.dy = this.getBoundingClientRect().height; });
 }
 
-// Simulate forces and update node and label positions on tick.
+function renderStaticLayout(){
+    node
+      .each(function(d) {
+        d.x += (d.bias * 400);
+      })
+      .attr("transform", function(d) {
+        return "translate(" + d.x + "," + d.y + ")";
+      });
+
+    label
+      .style("left", function(d) {
+        return (d.x - d.dx / 2) + "px";
+      })
+      .style("top", function(d) {
+        return (d.y - d.dy / 2) + "px";
+      });
+}
+
+// update node and label positions on tick.
 function tick(e) {
-  // node.attr("cx", function(d) { return d.x; })
-  //     .attr("cy", function(d) { return d.y; })
-  node
-    .each(bias(e.alpha * 100))
-    .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    node
+      //.each(bias(e.alpha * 100))
+      .attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; });
 
- // node.attr("cx", function(d) { return d.x; })
- //       .attr("cy", function(d) { return d.y; })
+    label
+      .style("left", function(d) {
 
-  // label
-  //     .style("left", function(d) { return (d.x) + "px"; })
-  //     .style("top", function(d) { return (d.y) + "px"; });
+if(d.name === 'Gonna Buy') debugger;
+
+        return (d.x - (d.dx / 2)) + "px";
+      })
+      .style("top", function(d) {
+        return (d.y) + "px";
+      });
 }
 
-// A left-right bias causing topics to orient by party preference.
+// A left-right bias causing topics to orient by group proportion
 function bias(alpha) {
   return function(d) {
     d.x += d.bias * alpha;

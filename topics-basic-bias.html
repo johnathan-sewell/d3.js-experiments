@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+</head>
+<body>
+
+    <svg width="970" height="540"></svg>
+
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+    <script>
+        data = [{
+            id: 1,
+            name: "Speed",
+            volume: 13,
+            groups: [{ volume: 13 }, { volume: 0 }],
+          },{
+            id: 2,
+            name: "Engine",
+            volume: 13,
+            groups: [{ volume: 13 }, { volume: 0 }],
+          },{
+            id: 3,
+            name: "Comfort",
+            volume: 13,
+            groups: [{ volume: 0 }, { volume: 13 }]
+          },{
+            id: 4,
+            name: "Drive",
+            volume: 13,
+            groups: [{ volume: 0 }, { volume: 13 }]
+          },{
+            id: 5,
+            name: "Gonna Buy",
+            volume: 21,
+            groups: [{ volume: 8 }, { volume: 13 }]
+          },{
+            id: 6,
+            name: "Price",
+            volume: 21,
+            groups: [{ volume: 13 }, { volume: 8 }]
+          },{
+            id: 7,
+            name: "Quality",
+            volume: 13,
+            groups: [{ volume: 7 }, { volume: 6 }],
+          },{
+            id: 8,
+            name: "Style",
+            volume: 10,
+            groups: [{ volume: 7 }, { volume: 3 }],
+          },{
+            id: 9,
+            name: "Finance",
+            volume: 8,
+            groups: [{ volume: 4 }, { volume: 4 }],
+          },{
+            id: 10,
+            name: "Torque",
+            volume: 21,
+            groups: [{ volume: 20 }, { volume: 1 }],
+          },{
+            id: 11,
+            name: "Stereo",
+            volume: 5,
+            groups: [{ volume: 0 }, { volume: 5 }],
+          },{
+            id: 12,
+            name: "Tyres",
+            volume: 21,
+            groups: [{ volume: 21 }, { volume: 0 }],
+          }
+        ];
+
+        var svg = d3.select('body').selectAll('svg');
+
+        var scale = d3.scale.linear()
+            .domain([5, 20])
+            .range([50, 200]);
+
+        var scale = d3.scale.linear()
+            .domain([0, d3.max(data, function(d) { return d.volume; })])
+            .range([0, 60]);
+
+        data.forEach(function(d) {
+          d.radius = scale(d.volume);
+          d.proportion = fraction(d.groups[0].volume, d.groups[1].volume);
+          d.bias = .5 - Math.max(.1, Math.min(.9, d.proportion));
+        });
+
+        var force = d3.layout.force()
+            .nodes(data)
+            .charge(charge)
+            .gravity(.2)
+            .size([970, 540])
+            .on("tick", tick)
+            .start();
+
+        var circles = svg.selectAll("circle")
+            .data(data)
+                .enter()
+                    .append("circle")
+                    .attr("fill", '#333')
+                    .attr("r", function(d){ return d.radius;});
+
+        //clipping
+        var groupAEnter = circles.append("g")
+          .attr("class", "g-groupA");
+
+        groupAEnter.append("clipPath")
+            .attr("id", function(d) {
+                return "g-clip-groupA-" + d.id;
+            })
+            .append("rect")
+            .attr("y", function(d) {
+                return -d.radius - 4 /*padding*/ ;
+            })
+            .attr("x", function(d) {
+                return -d.radius - 4 /*padding*/;
+            })
+            .attr("height", function(d) {
+                return 2 * d.radius + 2 * 4 /*padding*/ ;
+            })
+            .attr("width", function(d) {
+                return 2 * d.radius * d.proportion + 4 /*padding*/;
+            });
+
+        // groupAEnter.append("circle");
+
+        // var groupBEnter = circles.append("g")
+        //     .attr("class", "g-groupB");
+
+        // groupBEnter.append("clipPath")
+        //   .attr("id", function(d) { return "g-clip-groupB-" + d.id; })
+        // .append("rect");
+
+        // groupBEnter.append("circle");
+
+        // svg.selectAll("rect")
+        //     .attr("y", function(d) {
+        //         return -d.radius - 4 /*padding*/ ;
+        //     })
+        //     .attr("height", function(d) {
+        //         return 2 * d.radius + 2 * 4 /*padding*/ ;
+        //     });
+
+        // svg.select(".g-groupA rect")
+        //     .style("display", function(d) {
+        //         return d.proportion > 0 ? null : "none"
+        //     })
+        //     .attr("x", function(d) {
+        //         return -d.radius - 4 /*padding*/ ;
+        //     })
+        //     .attr("width", function(d) {
+        //         return 2 * d.radius * d.proportion + 4 /*padding*/ ;
+        //     });
+
+        // svg.select(".g-groupB rect")
+        //   .style("display", function(d) { return d.proportion < 1 ? null : "none" })
+        //   .attr("x", function(d) { return -d.radius + 2 * d.radius * d.proportion; })
+        //   .attr("width", function(d) { return 2 * d.radius; });
+
+        // svg.select(".g-groupA circle")
+        //   .attr("clip-path", function(d) { return d.proportion < 1 ? "url(#g-clip-groupA-" + d.id + ")" : null; });
+
+        // svg.select(".g-groupB circle")
+        //   .attr("clip-path", function(d) { return d.proportion > 0 ? "url(#g-clip-groupB-" + d.id + ")" : null; });
+
+        var labels = svg.selectAll("text")
+            .data(data).
+                enter()
+                    .append("text")
+                    .text(function(d) { return d.name; })
+                    .attr('fill', '#fff')
+                    .attr('font-size', function(d){
+                        return Math.max(d.volume, 14);
+                    })
+                    .each(function(d) {
+                        d.labelWidth = this.getBoundingClientRect().width;
+                    });
+
+        function tick(e) {
+            circles.attr("cx", function(d) {
+                var biasedX = d.x += (d.bias * (e.alpha * 100));
+                return biasedX;
+            }).attr("cy", function(d) {
+                return d.y;
+            });
+
+            labels
+                .attr("x", function(d) {
+                    return (d.x - (d.labelWidth / 2)) + "px";
+                })
+                .attr("y", function(d) {
+                    return d.y + "px";
+                });
+        }
+
+        function charge(d){
+            var diameter = d.volume * 2;
+            return -(diameter * 30);
+        }
+
+        // Given two quantities a and b, returns the fraction to split the circle a + b.
+        function fraction(a, b) {
+          var k = a / (a + b);
+          if (k > 0 && k < 1) {
+            var t0, t1 = Math.pow(12 * k * Math.PI, 1 / 3);
+            for (var i = 0; i < 10; ++i) { // Solve for theta numerically.
+              t0 = t1;
+              t1 = (Math.sin(t0) - t0 * Math.cos(t0) + 2 * k * Math.PI) / (1 - Math.cos(t0));
+            }
+            k = (1 - Math.cos(t1 / 2)) / 2;
+          }
+          return k;
+        }
+
+    </script>
+
+</body>
+</html>

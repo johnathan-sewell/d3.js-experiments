@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+</head>
+<body>
+
+    <svg width="970" height="540"></svg>
+
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+    <script>
+
+        data = [{
+            id: 1,
+            name: "Speed",
+            volume: 13,
+            groups: [{ volume: 13 }, { volume: 0 }],
+          },{
+            id: 2,
+            name: "Engine",
+            volume: 13,
+            groups: [{ volume: 13 }, { volume: 0 }],
+          },{
+            id: 3,
+            name: "Comfort",
+            volume: 13,
+            groups: [{ volume: 0 }, { volume: 13 }]
+          },{
+            id: 4,
+            name: "Drive",
+            volume: 13,
+            groups: [{ volume: 0 }, { volume: 13 }]
+          },{
+            id: 5,
+            name: "Gonna Buy",
+            volume: 21,
+            groups: [{ volume: 8 }, { volume: 13 }]
+          },{
+            id: 6,
+            name: "Price",
+            volume: 21,
+            groups: [{ volume: 13 }, { volume: 8 }]
+          },{
+            id: 7,
+            name: "Quality",
+            volume: 13,
+            groups: [{ volume: 7 }, { volume: 6 }],
+          },{
+            id: 8,
+            name: "Style",
+            volume: 10,
+            groups: [{ volume: 7 }, { volume: 3 }],
+          },{
+            id: 9,
+            name: "Finance",
+            volume: 8,
+            groups: [{ volume: 4 }, { volume: 4 }],
+          },{
+            id: 10,
+            name: "Torque",
+            volume: 21,
+            groups: [{ volume: 20 }, { volume: 1 }],
+          },{
+            id: 11,
+            name: "Stereo",
+            volume: 5,
+            groups: [{ volume: 0 }, { volume: 5 }],
+          },{
+            id: 12,
+            name: "Tyres",
+            volume: 21,
+            groups: [{ volume: 21 }, { volume: 0 }],
+          }
+        ];
+
+        var svg = d3.select('body').selectAll('svg');
+
+        var scale = d3.scale.linear()
+            .domain([5, 20])
+            .range([50, 200]);
+
+        var scale = d3.scale.linear()
+            .domain([0, d3.max(data, function(d) { return d.volume; })])
+            .range([0, 60]);
+
+        data.forEach(function(d) {
+          d.radius = scale(d.volume);
+        });
+
+        var force = d3.layout.force()
+            .nodes(data)
+            .charge(charge)
+            .size([970, 540])
+            .on("tick", tick)
+            .start();
+
+
+        var circles = svg.selectAll("circle")
+            .data(data)
+                .enter()
+                    .append("circle")
+                    .attr("fill", '#333')
+                    .attr("r", function(d){ return d.radius;});
+
+        var labels = svg.selectAll("text")
+            .data(data).
+                enter()
+                    .append("text")
+                    .text(function(d) { return d.name; })
+                    .attr('fill', '#fff')
+                    .attr('font-size', function(d){
+                        return Math.max(d.volume, 14);
+                    })
+                    .each(function(d) {
+                        d.labelWidth = this.getBoundingClientRect().width;
+                    });
+
+        function tick() {
+            circles.attr("cx", function(d) {
+                return d.x;
+            }).attr("cy", function(d) {
+                return d.y;
+            });
+
+            labels
+                .attr("x", function(d) {
+                    return (d.x - (d.labelWidth / 2)) + "px";
+                })
+                .attr("y", function(d) {
+                    return d.y + "px";
+                });
+        }
+
+        function charge(d){
+            var diameter = d.volume * 2;
+            return -(diameter * 16);
+        }
+
+    </script>
+
+</body>
+</html>
