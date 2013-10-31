@@ -28,90 +28,158 @@
 
     <script>
 
-        data = [{
-            id: 1,
-            name: "Speed",
-            volume: 13,
-            groups: [{ volume: 13 }, { volume: 0 }],
-          },{
-            id: 2,
-            name: "Engine",
-            volume: 13,
-            groups: [{ volume: 13 }, { volume: 0 }],
-          },{
-            id: 3,
-            name: "Comfort",
-            volume: 13,
-            groups: [{ volume: 0 }, { volume: 13 }]
-          },{
-            id: 4,
-            name: "Drive",
-            volume: 13,
-            groups: [{ volume: 0 }, { volume: 13 }]
-          },{
-            id: 5,
-            name: "Gonna Buy",
-            volume: 21,
-            groups: [{ volume: 8 }, { volume: 13 }]
-          },{
-            id: 6,
-            name: "Price",
-            volume: 21,
-            groups: [{ volume: 13 }, { volume: 8 }]
-          },{
-            id: 7,
-            name: "Quality",
-            volume: 13,
-            groups: [{ volume: 7 }, { volume: 6 }],
-          },{
-            id: 8,
-            name: "Style",
-            volume: 10,
-            groups: [{ volume: 7 }, { volume: 3 }],
-          },{
-            id: 9,
-            name: "Finance",
-            volume: 8,
-            groups: [{ volume: 4 }, { volume: 4 }],
-          },{
-            id: 10,
-            name: "Torque",
-            volume: 21,
-            groups: [{ volume: 20 }, { volume: 1 }],
-          },{
-            id: 11,
-            name: "Stereo",
-            volume: 5,
-            groups: [{ volume: 0 }, { volume: 5 }],
-          },{
-            id: 12,
-            name: "Tyres",
-            volume: 21,
-            groups: [{ volume: 21 }, { volume: 0 }],
-          }
-        ];
+        var data = [{
+            topic: 'NOITOUR',
+            groupA: 0,
+            groupB: 10
+        }, {
+            topic: 'Singing',
+            groupA: 2,
+            groupB: 18
+        }, {
+            topic: 'Love Will Remember',
+            groupA: 2,
+            groupB: 16
+        }, {
+            topic: 'Barclays advert',
+            groupA: 1,
+            groupB: 6
+        }, {
+            topic: 'LightningBoltTour',
+            groupA: 2,
+            groupB: 11
+        }, {
+            topic: 'Barclays Open Innovation',
+            groupA: 1,
+            groupB: 5
+        }, {
+            topic: 'Drake',
+            groupA: 4,
+            groupB: 18
+        }, {
+            topic: 'Win',
+            groupA: 5,
+            groupB: 11
+        }, {
+            topic: 'Barclays Bank',
+            groupA: 7,
+            groupB: 13
+        }, {
+            topic: 'Barclays Center',
+            groupA: 238,
+            groupB: 293
+        }, {
+            topic: 'Brooklyn NY',
+            groupA: 12,
+            groupB: 14
+        }, {
+            topic: 'Barclays league',
+            groupA: 2,
+            groupB: 2
+        }, {
+            topic: 'Retired to the rafters',
+            groupA: 3,
+            groupB: 3
+        }, {
+            topic: 'Jason Kidds',
+            groupA: 5,
+            groupB: 5
+        }, {
+            topic: 'Pearl Jams',
+            groupA: 5,
+            groupB: 5
+        }, {
+            topic: 'Player of the Month',
+            groupA: 18,
+            groupB: 16
+        }, {
+            topic: 'Pearl Jam at Barclays',
+            groupA: 9,
+            groupB: 7
+        }, {
+            topic: 'Brooklyn Nets',
+            groupA: 7,
+            groupB: 5
+        }, {
+            topic: 'LFC',
+            groupA: 149,
+            groupB: 104
+        }, {
+            topic: 'Norwich City',
+            groupA: 6,
+            groupB: 4
+        }, {
+            topic: 'Libor Lowballing',
+            groupA: 6,
+            groupB: 2
+        }, {
+            topic: 'Open practice',
+            groupA: 6,
+            groupB: 2
+        }, {
+            topic: 'Hawthorns',
+            groupA: 9,
+            groupB: 3
+        }, {
+            topic: 'Congratulations',
+            groupA: 13,
+            groupB: 4
+        }, {
+            topic: 'Premier League matches',
+            groupA: 8,
+            groupB: 2
+        }, {
+            topic: 'Setlist',
+            groupA: 8,
+            groupB: 2
+        }, {
+            topic: 'Nets jersey',
+            groupA: 10,
+            groupB: 1
+        }, {
+            topic: 'Barclays UK',
+            groupA: 15,
+            groupB: 1
+        }, {
+            topic: 'Barclays Premier League table',
+            groupA: 5,
+            groupB: 0
+        }, {
+            topic: 'Concert tickets',
+            groupA: 7,
+            groupB: 0
+        }]
 
+        var settings = {
+            inputDomain: [0, d3.max(data, function(d) { return d.groupA + d.groupB; })],
+            outputRange: [40, 100]
+        };
         var svg = d3.select('body').select('svg')
             .style('border', '1px solid #ccc');
 
-        var scale = d3.scale.linear()
-            .domain([5, 20])
-            .range([50, 200]);
+        //var scale = d3.scale.linear()
+        var scale = d3.scale.pow().exponent(.5)
+            .domain(settings.inputDomain) //input domain
+            .range(settings.outputRange);    //output range
 
-        var scale = d3.scale.linear()
-            .domain([0, d3.max(data, function(d) { return d.volume; })])
-            .range([0, 60]);
+        // var scale = d3.scale.log(.5)
+        //     .range([10, 50]);    //output range
 
-        data.forEach(function(d) {
-            d.radius = scale(d.volume);
-            d.proportion = fraction(d.groups[0].volume, d.groups[1].volume);
+        var fontScale = d3.scale.linear()
+            .domain(settings.inputDomain) //input domain
+            .range([12, 30]);    //output range
+
+        data.forEach(function(d, i) {
+            d.id = i;
+            d.radius = scale(d.groupA + d.groupB);
+            d.proportion = fraction(d.groupA, d.groupB);
             d.bias = .5 - Math.max(.1, Math.min(.9, d.proportion));
         });
 
         var force = d3.layout.force()
             .nodes(data)
             .charge(charge)
-            .gravity(.15)
+            .gravity(.2)
             .size([970, 540])
             .on("tick", tick)
             .start();
@@ -128,10 +196,10 @@
         groupA.append("clipPath")
             .attr("id", function(d) { return "g-clip-groupA-" + d.id; })
             .append("rect")
-            .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
-            .attr("x", function(d) { return -d.radius - 4 /*clipping*/; })
-            .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
-            .attr("width", function(d) { return 2 * d.radius * d.proportion + 4 /*clipping*/; });
+                .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
+                .attr("x", function(d) { return -d.radius - 4 /*clipping*/; })
+                .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
+                .attr("width", function(d) { return 2 * d.radius * d.proportion + 4 /*clipping*/; });
 
         var circles = groupA.append("circle")
             .attr("clip-path", function(d) { return "url(#g-clip-groupA-" + d.id + ")"; })
@@ -144,25 +212,25 @@
         groupB.append("clipPath")
             .attr("id", function(d) { return "g-clip-groupB-" + d.id; })
             .append("rect")
-            .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
-            .attr("x", function(d) { return -d.radius + 2 * d.radius * d.proportion; })
-            .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
-            .attr("width", function(d) { return 2 * d.radius; });
+                .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
+                .attr("x", function(d) { return -d.radius + 2 * d.radius * d.proportion; })
+                .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
+                .attr("width", function(d) { return 2 * d.radius; });
 
         var circles = groupB.append("circle")
             .attr("clip-path", function(d) { return "url(#g-clip-groupB-" + d.id + ")"; })
             .attr("fill", '#0095c8')
             .attr("r", function(d){ return d.radius;});
 
-        var labels = svg.selectAll("text")
+        var labels = svg.selectAll(".text-node")
             .data(data).
                 enter()
                     .append("text")
-                    .text(function(d) { return d.name; })
+                    .text(function(d) { return d.topic; })
                     .attr('fill', '#111')
                     .attr('font-family', 'sans-serif')
                     .attr('font-size', function(d){
-                        return Math.max(d.volume, 14);
+                        return fontScale(d.groupA + d.groupB);
                     })
                     .each(function(d) {
                         d.labelWidth = this.getBoundingClientRect().width;
@@ -171,7 +239,6 @@
         function tick(e) {
             circleAnchors
                 .attr("transform", function(d) {
-                    debugger;
                     d.x += d.bias * (e.alpha * 100);
                     return "translate(" + d.x + "," + d.y + ")";
                 });
@@ -186,8 +253,8 @@
         }
 
         function charge(d){
-            var diameter = d.volume * 2;
-            return -(diameter * 18);
+            var diameter = d.radius * 2;
+            return -(diameter * 10);
         }
 
         // Given two quantities a and b, returns the fraction to split the circle a + b.
