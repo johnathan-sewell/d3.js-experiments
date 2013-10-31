@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+</head>
+<body style="font-family:sans-serif">
+
+    <svg width="970" height="540">
+        <text x="20" y="520"
+            font-family="sans-serif"
+            font-size="18",
+            style="fill:#333">
+            Topics favoured by female authors
+        </text>
+        <text x="680" y="520"
+            font-family="sans-serif"
+            font-size="18",
+            style="fill:#333">
+            Topics favoured by male authors
+        </text>
+    </svg>
+
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+    <script>
+
+        var data = [{
+            topic: 'NOITOUR',
+            groupB: 0,
+            groupA: 10
+        }, {
+            topic: 'Singing',
+            groupB: 2,
+            groupA: 18
+        }, {
+            topic: 'Love Will Remember',
+            groupB: 2,
+            groupA: 16
+        }, {
+            topic: 'Barclays advert',
+            groupB: 1,
+            groupA: 6
+        }, {
+            topic: 'LightningBoltTour',
+            groupB: 2,
+            groupA: 11
+        }, {
+            topic: 'Barclays Open Innovation',
+            groupB: 1,
+            groupA: 5
+        }, {
+            topic: 'Drake',
+            groupB: 4,
+            groupA: 18
+        }, {
+            topic: 'Win',
+            groupB: 5,
+            groupA: 11
+        }, {
+            topic: 'Barclays Bank',
+            groupB: 7,
+            groupA: 13
+        }, {
+            topic: 'Barclays Center',
+            groupB: 238,
+            groupA: 293
+        }, {
+            topic: 'Brooklyn NY',
+            groupB: 12,
+            groupA: 14
+        }, {
+            topic: 'Barclays league',
+            groupB: 2,
+            groupA: 2
+        }, {
+            topic: 'Retired to the rafters',
+            groupB: 3,
+            groupA: 3
+        }, {
+            topic: 'Jason Kidds',
+            groupB: 5,
+            groupA: 5
+        }, {
+            topic: 'Pearl Jams',
+            groupB: 5,
+            groupA: 5
+        }, {
+            topic: 'Player of the Month',
+            groupB: 18,
+            groupA: 16
+        }, {
+            topic: 'Pearl Jam at Barclays',
+            groupB: 9,
+            groupA: 7
+        }, {
+            topic: 'Brooklyn Nets',
+            groupB: 7,
+            groupA: 5
+        }, {
+            topic: 'LFC',
+            groupB: 149,
+            groupA: 104
+        }, {
+            topic: 'Norwich City',
+            groupB: 6,
+            groupA: 4
+        }, {
+            topic: 'Libor Lowballing',
+            groupB: 6,
+            groupA: 2
+        }, {
+            topic: 'Open practice',
+            groupB: 6,
+            groupA: 2
+        }, {
+            topic: 'Hawthorns',
+            groupB: 9,
+            groupA: 3
+        }, {
+            topic: 'Congratulations',
+            groupB: 13,
+            groupA: 4
+        }, {
+            topic: 'Premier League matches',
+            groupB: 8,
+            groupA: 2
+        }, {
+            topic: 'Setlist',
+            groupB: 8,
+            groupA: 2
+        }, {
+            topic: 'Nets jersey',
+            groupB: 10,
+            groupA: 1
+        }, {
+            topic: 'Barclays UK',
+            groupB: 15,
+            groupA: 1
+        }, {
+            topic: 'Barclays Premier League table',
+            groupB: 5,
+            groupA: 0
+        }, {
+            topic: 'Concert tickets',
+            groupB: 7,
+            groupA: 0
+        }];
+
+        data = data.filter(function(d){
+            var proportion = fraction(d.groupA, d.groupB);
+            return proportion > .6 || proportion < .4;
+        });
+
+        var settings = {
+            inputDomain: [0, d3.max(data, function(d) { return d.groupA + d.groupB; })],
+            minRadius: 30, // minimum collision radius
+            maxRadius: 65, // also determines collision search radius
+            collisionPadding: 4
+        };
+        var svg = d3.select('body').select('svg')
+            .style('border', '1px solid #ccc');
+
+        var scale = d3.scale.linear()
+            .domain(settings.inputDomain)
+            .range([settings.minRadius, settings.maxRadius]);
+
+        // var scale = d3.scale.sqrt()
+        //     .domain(settings.inputDomain)
+        //     .range([settings.minRadius, settings.maxRadius]);
+
+        var fontScale = d3.scale.linear()
+            .domain(settings.inputDomain) //input domain
+            .range([12, 18]);    //output range
+
+        data.forEach(function(d, i) {
+            d.id = i;
+            d.radius = scale(d.groupA + d.groupB);
+            d.proportion = fraction(d.groupA, d.groupB);
+            d.bias = .5 - Math.max(.1, Math.min(.9, d.proportion));
+        });
+
+        var force = d3.layout.force()
+            .nodes(data)
+            .gravity(.15)
+            .size([970, 540])
+            .on("tick", tick)
+            .start();
+
+        var circleAnchors;
+        var labels;
+        addNodes();
+
+        function addNodes(){
+            circleAnchors = svg.selectAll(".circle-anchor")
+                .data(data)
+                    .enter()
+                        .append('a')
+                        .attr('class', 'circle-anchor');
+
+            var groupA = circleAnchors.append("g")
+                .attr("class", "g-groupA");
+
+            groupA.append("clipPath")
+                .attr("id", function(d) { return "g-clip-groupA-" + d.id; })
+                .append("rect")
+                    .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
+                    .attr("x", function(d) { return -d.radius - 4 /*clipping*/; })
+                    .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
+                    .attr("width", function(d) { return 2 * d.radius * d.proportion + 4 /*clipping*/; });
+
+            var circles = groupA.append("circle")
+                .attr("clip-path", function(d) { return "url(#g-clip-groupA-" + d.id + ")"; })
+                .attr("fill", '#cf3370')
+                .attr("r", function(d){ return d.radius;});
+
+            var groupB = circleAnchors.append("g")
+                .attr("class", "g-groupB");
+
+            groupB.append("clipPath")
+                .attr("id", function(d) { return "g-clip-groupB-" + d.id; })
+                .append("rect")
+                    .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
+                    .attr("x", function(d) { return -d.radius + 2 * d.radius * d.proportion; })
+                    .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
+                    .attr("width", function(d) { return 2 * d.radius; });
+
+            var circles = groupB.append("circle")
+                .attr("clip-path", function(d) { return "url(#g-clip-groupB-" + d.id + ")"; })
+                .attr("fill", '#0095c8')
+                .attr("r", function(d){ return d.radius;});
+
+            labels = svg.selectAll(".text-node")
+                .data(data).
+                    enter()
+                        .append("text")
+                        .text(function(d) { return d.topic; })
+                        .attr('fill', '#111')
+                        .attr('font-family', 'sans-serif')
+                        .attr('font-size', function(d){
+                            return fontScale(d.groupA + d.groupB);
+                        })
+                        .each(function(d) {
+                            d.labelWidth = this.getBoundingClientRect().width;
+                        });
+        }
+
+        function tick(e) {
+            circleAnchors
+                .each(bias(e.alpha * 100))
+                .each(collide(.5))
+                .attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y + ")";
+                });
+
+            labels
+                .attr("x", function(d) {
+                    return (d.x - (d.labelWidth / 2)) + "px";
+                })
+                .attr("y", function(d) {
+                    return d.y + "px";
+                });
+        }
+
+        // Given two quantities a and b, returns the fraction to split the circle a + b.
+        function fraction(a, b) {
+          var k = a / (a + b);
+          if (k > 0 && k < 1) {
+            var t0, t1 = Math.pow(12 * k * Math.PI, 1 / 3);
+            for (var i = 0; i < 10; ++i) { // Solve for theta numerically.
+              t0 = t1;
+              t1 = (Math.sin(t0) - t0 * Math.cos(t0) + 2 * k * Math.PI) / (1 - Math.cos(t0));
+            }
+            k = (1 - Math.cos(t1 / 2)) / 2;
+          }
+          return k;
+        }
+
+        function bias(alpha) {
+            return function(d) {
+                d.x += d.bias * alpha;
+            };
+        }
+
+        function collide(alpha) {
+            var q = d3.geom.quadtree(data);
+            return function(d) {
+                var r = d.radius + settings.maxRadius + settings.collisionPadding,
+                    nx1 = d.x - r,
+                    nx2 = d.x + r,
+                    ny1 = d.y - r,
+                    ny2 = d.y + r;
+                q.visit(function(quad, x1, y1, x2, y2) {
+                    if (quad.point && (quad.point !== d)) {
+                        var x = d.x - quad.point.x,
+                            y = d.y - quad.point.y,
+                            l = Math.sqrt(x * x + y * y),
+                            r = d.radius + quad.point.radius;
+                        if (l < r) {
+                            l = (l - r) / l * .5;
+                            d.x -= x *= l;
+                            d.y -= y *= l;
+                            quad.point.x += x;
+                            quad.point.y += y;
+                        }
+                    }
+                    return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+                });
+            };
+        }
+
+    </script>
+
+</body>
+</html>
