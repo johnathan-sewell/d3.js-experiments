@@ -28,149 +28,148 @@
 
     <script>
 
-        var data = [{
+    var data = [{
             topic: 'NOITOUR',
-            groupA: 0,
-            groupB: 10
+            groupB: 0,
+            groupA: 10
         }, {
             topic: 'Singing',
-            groupA: 2,
-            groupB: 18
+            groupB: 2,
+            groupA: 18
         }, {
             topic: 'Love Will Remember',
-            groupA: 2,
-            groupB: 16
+            groupB: 2,
+            groupA: 16
         }, {
             topic: 'Barclays advert',
-            groupA: 1,
-            groupB: 6
+            groupB: 1,
+            groupA: 6
         }, {
             topic: 'LightningBoltTour',
-            groupA: 2,
-            groupB: 11
+            groupB: 2,
+            groupA: 11
         }, {
             topic: 'Barclays Open Innovation',
-            groupA: 1,
-            groupB: 5
+            groupB: 1,
+            groupA: 5
         }, {
             topic: 'Drake',
-            groupA: 4,
-            groupB: 18
+            groupB: 4,
+            groupA: 18
         }, {
             topic: 'Win',
-            groupA: 5,
-            groupB: 11
+            groupB: 5,
+            groupA: 11
         }, {
             topic: 'Barclays Bank',
-            groupA: 7,
-            groupB: 13
+            groupB: 7,
+            groupA: 13
         }, {
             topic: 'Barclays Center',
-            groupA: 238,
-            groupB: 293
+            groupB: 238,
+            groupA: 293
         }, {
             topic: 'Brooklyn NY',
-            groupA: 12,
-            groupB: 14
+            groupB: 12,
+            groupA: 14
         }, {
             topic: 'Barclays league',
-            groupA: 2,
-            groupB: 2
+            groupB: 2,
+            groupA: 2
         }, {
             topic: 'Retired to the rafters',
-            groupA: 3,
-            groupB: 3
+            groupB: 3,
+            groupA: 3
         }, {
             topic: 'Jason Kidds',
-            groupA: 5,
-            groupB: 5
+            groupB: 5,
+            groupA: 5
         }, {
             topic: 'Pearl Jams',
-            groupA: 5,
-            groupB: 5
+            groupB: 5,
+            groupA: 5
         }, {
             topic: 'Player of the Month',
-            groupA: 18,
-            groupB: 16
+            groupB: 18,
+            groupA: 16
         }, {
             topic: 'Pearl Jam at Barclays',
-            groupA: 9,
-            groupB: 7
+            groupB: 9,
+            groupA: 7
         }, {
             topic: 'Brooklyn Nets',
-            groupA: 7,
-            groupB: 5
+            groupB: 7,
+            groupA: 5
         }, {
             topic: 'LFC',
-            groupA: 149,
-            groupB: 104
+            groupB: 149,
+            groupA: 104
         }, {
             topic: 'Norwich City',
-            groupA: 6,
-            groupB: 4
+            groupB: 6,
+            groupA: 4
         }, {
             topic: 'Libor Lowballing',
-            groupA: 6,
-            groupB: 2
+            groupB: 6,
+            groupA: 2
         }, {
             topic: 'Open practice',
-            groupA: 6,
-            groupB: 2
+            groupB: 6,
+            groupA: 2
         }, {
             topic: 'Hawthorns',
-            groupA: 9,
-            groupB: 3
+            groupB: 9,
+            groupA: 3
         }, {
             topic: 'Congratulations',
-            groupA: 13,
-            groupB: 4
+            groupB: 13,
+            groupA: 4
         }, {
             topic: 'Premier League matches',
-            groupA: 8,
-            groupB: 2
+            groupB: 8,
+            groupA: 2
         }, {
             topic: 'Setlist',
-            groupA: 8,
-            groupB: 2
+            groupB: 8,
+            groupA: 2
         }, {
             topic: 'Nets jersey',
-            groupA: 10,
-            groupB: 1
+            groupB: 10,
+            groupA: 1
         }, {
             topic: 'Barclays UK',
-            groupA: 15,
-            groupB: 1
+            groupB: 15,
+            groupA: 1
         }, {
             topic: 'Barclays Premier League table',
-            groupA: 5,
-            groupB: 0
+            groupB: 5,
+            groupA: 0
         }, {
             topic: 'Concert tickets',
-            groupA: 7,
-            groupB: 0
-        }]
+            groupB: 7,
+            groupA: 0
+        }];
 
         var settings = {
             inputDomain: [0, d3.max(data, function(d) { return d.groupA + d.groupB; })],
-            outputRange: [40, 100],
-            minRadius: 16, // minimum collision radius
-            maxRadius: 65, // also determines collision search radius
+            minRadius: 30, // minimum collision radius
+            maxRadius: 85, // also determines collision search radius
             collisionPadding: 4
         };
         var svg = d3.select('body').select('svg')
             .style('border', '1px solid #ccc');
 
         var scale = d3.scale.linear()
-            .domain(settings.inputDomain) //input domain
-            .range(settings.outputRange);    //output range
+            .domain(settings.inputDomain)
+            .range([settings.minRadius, settings.maxRadius]);
 
         // var scale = d3.scale.sqrt()
-        //     .domain([0, d3.max(data.topics, function(d) { return d.count; })])
-        //     .range([0, maxRadius]);
+        //     .domain(settings.inputDomain)
+        //     .range([settings.minRadius, settings.maxRadius]);
 
         var fontScale = d3.scale.linear()
             .domain(settings.inputDomain) //input domain
-            .range([12, 30]);    //output range
+            .range([12, 28]);    //output range
 
         data.forEach(function(d, i) {
             d.id = i;
@@ -186,57 +185,63 @@
             .on("tick", tick)
             .start();
 
-        var circleAnchors = svg.selectAll(".circle-anchor")
-            .data(data)
-                .enter()
-                    .append('a')
-                    .attr('class', 'circle-anchor');
+        var circleAnchors;
+        var labels;
+        addNodes();
 
-        var groupA = circleAnchors.append("g")
-            .attr("class", "g-groupA");
+        function addNodes(){
+            circleAnchors = svg.selectAll(".circle-anchor")
+                .data(data)
+                    .enter()
+                        .append('a')
+                        .attr('class', 'circle-anchor');
 
-        groupA.append("clipPath")
-            .attr("id", function(d) { return "g-clip-groupA-" + d.id; })
-            .append("rect")
-                .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
-                .attr("x", function(d) { return -d.radius - 4 /*clipping*/; })
-                .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
-                .attr("width", function(d) { return 2 * d.radius * d.proportion + 4 /*clipping*/; });
+            var groupA = circleAnchors.append("g")
+                .attr("class", "g-groupA");
 
-        var circles = groupA.append("circle")
-            .attr("clip-path", function(d) { return "url(#g-clip-groupA-" + d.id + ")"; })
-            .attr("fill", '#cf3370')
-            .attr("r", function(d){ return d.radius;});
+            groupA.append("clipPath")
+                .attr("id", function(d) { return "g-clip-groupA-" + d.id; })
+                .append("rect")
+                    .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
+                    .attr("x", function(d) { return -d.radius - 4 /*clipping*/; })
+                    .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
+                    .attr("width", function(d) { return 2 * d.radius * d.proportion + 4 /*clipping*/; });
 
-        var groupB = circleAnchors.append("g")
-            .attr("class", "g-groupB");
+            var circles = groupA.append("circle")
+                .attr("clip-path", function(d) { return "url(#g-clip-groupA-" + d.id + ")"; })
+                .attr("fill", '#cf3370')
+                .attr("r", function(d){ return d.radius;});
 
-        groupB.append("clipPath")
-            .attr("id", function(d) { return "g-clip-groupB-" + d.id; })
-            .append("rect")
-                .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
-                .attr("x", function(d) { return -d.radius + 2 * d.radius * d.proportion; })
-                .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
-                .attr("width", function(d) { return 2 * d.radius; });
+            var groupB = circleAnchors.append("g")
+                .attr("class", "g-groupB");
 
-        var circles = groupB.append("circle")
-            .attr("clip-path", function(d) { return "url(#g-clip-groupB-" + d.id + ")"; })
-            .attr("fill", '#0095c8')
-            .attr("r", function(d){ return d.radius;});
+            groupB.append("clipPath")
+                .attr("id", function(d) { return "g-clip-groupB-" + d.id; })
+                .append("rect")
+                    .attr("y", function(d) { return -d.radius - 4 /*clipping*/; })
+                    .attr("x", function(d) { return -d.radius + 2 * d.radius * d.proportion; })
+                    .attr("height", function(d) { return 2 * d.radius + 2 * 4 /*clipping*/; })
+                    .attr("width", function(d) { return 2 * d.radius; });
 
-        var labels = svg.selectAll(".text-node")
-            .data(data).
-                enter()
-                    .append("text")
-                    .text(function(d) { return d.topic; })
-                    .attr('fill', '#111')
-                    .attr('font-family', 'sans-serif')
-                    .attr('font-size', function(d){
-                        return fontScale(d.groupA + d.groupB);
-                    })
-                    .each(function(d) {
-                        d.labelWidth = this.getBoundingClientRect().width;
-                    });
+            var circles = groupB.append("circle")
+                .attr("clip-path", function(d) { return "url(#g-clip-groupB-" + d.id + ")"; })
+                .attr("fill", '#0095c8')
+                .attr("r", function(d){ return d.radius;});
+
+            labels = svg.selectAll(".text-node")
+                .data(data).
+                    enter()
+                        .append("text")
+                        .text(function(d) { return d.topic; })
+                        .attr('fill', '#111')
+                        .attr('font-family', 'sans-serif')
+                        .attr('font-size', function(d){
+                            return fontScale(d.groupA + d.groupB);
+                        })
+                        .each(function(d) {
+                            d.labelWidth = this.getBoundingClientRect().width;
+                        });
+        }
 
         function tick(e) {
             circleAnchors
@@ -254,11 +259,6 @@
                     return d.y + "px";
                 });
         }
-
-        // function charge(d){
-        //     var diameter = d.radius * 2;
-        //     return -(diameter * 10);
-        // }
 
         // Given two quantities a and b, returns the fraction to split the circle a + b.
         function fraction(a, b) {
@@ -280,31 +280,6 @@
             };
         }
 
-        // function collide(node) {
-        //     var r = node.radius + 16,
-        //         nx1 = node.x - r,
-        //         nx2 = node.x + r,
-        //         ny1 = node.y - r,
-        //         ny2 = node.y + r;
-        //     return function(quad, x1, y1, x2, y2) {
-        //         if (quad.point && (quad.point !== node)) {
-        //             var x = node.x - quad.point.x,
-        //                 y = node.y - quad.point.y,
-        //                 l = Math.sqrt(x * x + y * y),
-        //                 r = node.radius + quad.point.radius;
-        //             if (l < r) {
-        //                 l = (l - r) / l * .5;
-        //                 node.x -= x *= l;
-        //                 node.y -= y *= l;
-        //                 quad.point.x += x;
-        //                 quad.point.y += y;
-        //             }
-        //         }
-        //         return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
-        //     };
-        // }
-
-        // Resolve collisions between nodes.
         function collide(alpha) {
             var q = d3.geom.quadtree(data);
             return function(d) {
@@ -314,19 +289,6 @@
                     ny1 = d.y - r,
                     ny2 = d.y + r;
                 q.visit(function(quad, x1, y1, x2, y2) {
-                    // if (quad.point && (quad.point !== d) && d.other !== quad.point && d !== quad.point.other) {
-                    //     var x = d.x - quad.point.x,
-                    //         y = d.y - quad.point.y,
-                    //         l = Math.sqrt(x * x + y * y),
-                    //         r = d.radius + quad.point.r + settings.collisionPadding;
-                    //     if (l < r) {
-                    //         l = (l - r) / l * alpha;
-                    //         d.x -= x *= l;
-                    //         d.y -= y *= l;
-                    //         quad.point.x += x;
-                    //         quad.point.y += y;
-                    //     }
-                    // }
                     if (quad.point && (quad.point !== d)) {
                         var x = d.x - quad.point.x,
                             y = d.y - quad.point.y,
