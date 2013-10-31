@@ -3,9 +3,26 @@
 <head>
 <meta charset=utf-8 />
 </head>
-<body>
+<body style="font-family:sans-serif">
 
-    <svg width="970" height="540"></svg>
+    <svg width="970" height="540">
+        <text x="20" y="520"
+            font-family="sans-serif"
+            font-size="18",
+            style="fill:#333">
+            Topics favoured by female authors
+        </text>
+        <text x="680" y="520"
+            font-family="sans-serif"
+            font-size="18",
+            style="fill:#333">
+            Topics favoured by male authors
+        </text>
+    </svg>
+    <form>
+        <input type="checkbox" name="showAll" id="showAll">
+        <label for="showAll">Show common topics</label>
+    </form>
 
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 
@@ -74,7 +91,7 @@
           }
         ];
 
-        var svg = d3.select('body').selectAll('svg')
+        var svg = d3.select('body').select('svg')
             .style('border', '1px solid #ccc');
 
         var scale = d3.scale.linear()
@@ -170,7 +187,7 @@
 
         function charge(d){
             var diameter = d.volume * 2;
-            return -(diameter * 16);
+            return -(diameter * 18);
         }
 
         // Given two quantities a and b, returns the fraction to split the circle a + b.
