@@ -74,7 +74,8 @@
           }
         ];
 
-        var svg = d3.select('body').selectAll('svg');
+        var svg = d3.select('body').selectAll('svg')
+            .style('border', '1px solid #ccc');
 
         var scale = d3.scale.linear()
             .domain([5, 20])
@@ -93,6 +94,7 @@
         var force = d3.layout.force()
             .nodes(data)
             .charge(charge)
+            .gravity(.15)
             .size([970, 540])
             .on("tick", tick)
             .start();
@@ -149,9 +151,13 @@
                         d.labelWidth = this.getBoundingClientRect().width;
                     });
 
-        function tick() {
+        function tick(e) {
             circleAnchors
-                .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+                .attr("transform", function(d) {
+                    debugger;
+                    d.x += d.bias * (e.alpha * 100);
+                    return "translate(" + d.x + "," + d.y + ")";
+                });
 
             labels
                 .attr("x", function(d) {
