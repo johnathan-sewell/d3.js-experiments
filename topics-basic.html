@@ -152,18 +152,21 @@
 
         var settings = {
             inputDomain: [0, d3.max(data, function(d) { return d.groupA + d.groupB; })],
-            outputRange: [40, 100]
+            outputRange: [40, 100],
+            minRadius: 16, // minimum collision radius
+            maxRadius: 65, // also determines collision search radius
+            collisionPadding: 4
         };
         var svg = d3.select('body').select('svg')
             .style('border', '1px solid #ccc');
 
-        //var scale = d3.scale.linear()
-        var scale = d3.scale.pow().exponent(.5)
+        var scale = d3.scale.linear()
             .domain(settings.inputDomain) //input domain
             .range(settings.outputRange);    //output range
 
-        // var scale = d3.scale.log(.5)
-        //     .range([10, 50]);    //output range
+        // var scale = d3.scale.sqrt()
+        //     .domain([0, d3.max(data.topics, function(d) { return d.count; })])
+        //     .range([0, maxRadius]);
 
         var fontScale = d3.scale.linear()
             .domain(settings.inputDomain) //input domain
@@ -178,8 +181,7 @@
 
         var force = d3.layout.force()
             .nodes(data)
-            .charge(charge)
-            .gravity(.2)
+            .charge(1)
             .size([970, 540])
             .on("tick", tick)
             .start();
@@ -238,8 +240,9 @@
 
         function tick(e) {
             circleAnchors
+                .each(bias(e.alpha * 100))
+                .each(collide(.5))
                 .attr("transform", function(d) {
-                    d.x += d.bias * (e.alpha * 100);
                     return "translate(" + d.x + "," + d.y + ")";
                 });
 
@@ -252,10 +255,10 @@
                 });
         }
 
-        function charge(d){
-            var diameter = d.radius * 2;
-            return -(diameter * 10);
-        }
+        // function charge(d){
+        //     var diameter = d.radius * 2;
+        //     return -(diameter * 10);
+        // }
 
         // Given two quantities a and b, returns the fraction to split the circle a + b.
         function fraction(a, b) {
@@ -269,6 +272,77 @@
             k = (1 - Math.cos(t1 / 2)) / 2;
           }
           return k;
+        }
+
+        function bias(alpha) {
+            return function(d) {
+                d.x += d.bias * alpha;
+            };
+        }
+
+        // function collide(node) {
+        //     var r = node.radius + 16,
+        //         nx1 = node.x - r,
+        //         nx2 = node.x + r,
+        //         ny1 = node.y - r,
+        //         ny2 = node.y + r;
+        //     return function(quad, x1, y1, x2, y2) {
+        //         if (quad.point && (quad.point !== node)) {
+        //             var x = node.x - quad.point.x,
+        //                 y = node.y - quad.point.y,
+        //                 l = Math.sqrt(x * x + y * y),
+        //                 r = node.radius + quad.point.radius;
+        //             if (l < r) {
+        //                 l = (l - r) / l * .5;
+        //                 node.x -= x *= l;
+        //                 node.y -= y *= l;
+        //                 quad.point.x += x;
+        //                 quad.point.y += y;
+        //             }
+        //         }
+        //         return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+        //     };
+        // }
+
+        // Resolve collisions between nodes.
+        function collide(alpha) {
+            var q = d3.geom.quadtree(data);
+            return function(d) {
+                var r = d.radius + settings.maxRadius + settings.collisionPadding,
+                    nx1 = d.x - r,
+                    nx2 = d.x + r,
+                    ny1 = d.y - r,
+                    ny2 = d.y + r;
+                q.visit(function(quad, x1, y1, x2, y2) {
+                    // if (quad.point && (quad.point !== d) && d.other !== quad.point && d !== quad.point.other) {
+                    //     var x = d.x - quad.point.x,
+                    //         y = d.y - quad.point.y,
+                    //         l = Math.sqrt(x * x + y * y),
+                    //         r = d.radius + quad.point.r + settings.collisionPadding;
+                    //     if (l < r) {
+                    //         l = (l - r) / l * alpha;
+                    //         d.x -= x *= l;
+                    //         d.y -= y *= l;
+                    //         quad.point.x += x;
+                    //         quad.point.y += y;
+                    //     }
+                    // }
+                    if (quad.point && (quad.point !== d)) {
+                        var x = d.x - quad.point.x,
+                            y = d.y - quad.point.y,
+                            l = Math.sqrt(x * x + y * y),
+                            r = d.radius + quad.point.radius;
+                        if (l < r) {
+                            l = (l - r) / l * .5;
+                            d.x -= x *= l;
+                            d.y -= y *= l;
+                            quad.point.x += x;
+                            quad.point.y += y;
+                        }
+                    }
+                    return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+                });
+            };
         }
 
     </script>
