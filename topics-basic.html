@@ -116,7 +116,7 @@
 
         var circles = groupA.append("circle")
             .attr("clip-path", function(d) { return "url(#g-clip-groupA-" + d.id + ")"; })
-            .attr("fill", '#00f')
+            .attr("fill", '#cf3370')
             .attr("r", function(d){ return d.radius;});
 
         var groupB = circleAnchors.append("g")
@@ -132,46 +132,34 @@
 
         var circles = groupB.append("circle")
             .attr("clip-path", function(d) { return "url(#g-clip-groupB-" + d.id + ")"; })
-            .attr("fill", '#f00')
+            .attr("fill", '#0095c8')
             .attr("r", function(d){ return d.radius;});
 
-        // var circles = svg.selectAll("circle")
-        //     .data(data)
-        //         .enter()
-        //             .append("circle")
-        //             .attr("fill", '#333')
-        //             .attr("r", function(d){ return d.radius;});
-
-        // var labels = svg.selectAll("text")
-        //     .data(data).
-        //         enter()
-        //             .append("text")
-        //             .text(function(d) { return d.name; })
-        //             .attr('fill', '#fff')
-        //             .attr('font-size', function(d){
-        //                 return Math.max(d.volume, 14);
-        //             })
-        //             .each(function(d) {
-        //                 d.labelWidth = this.getBoundingClientRect().width;
-        //             });
+        var labels = svg.selectAll("text")
+            .data(data).
+                enter()
+                    .append("text")
+                    .text(function(d) { return d.name; })
+                    .attr('fill', '#111')
+                    .attr('font-family', 'sans-serif')
+                    .attr('font-size', function(d){
+                        return Math.max(d.volume, 14);
+                    })
+                    .each(function(d) {
+                        d.labelWidth = this.getBoundingClientRect().width;
+                    });
 
         function tick() {
             circleAnchors
                 .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
-            // circles.attr("cx", function(d) {
-            //     return d.x;
-            // }).attr("cy", function(d) {
-            //     return d.y;
-            // });
-
-            // labels
-            //     .attr("x", function(d) {
-            //         return (d.x - (d.labelWidth / 2)) + "px";
-            //     })
-            //     .attr("y", function(d) {
-            //         return d.y + "px";
-            //     });
+            labels
+                .attr("x", function(d) {
+                    return (d.x - (d.labelWidth / 2)) + "px";
+                })
+                .attr("y", function(d) {
+                    return d.y + "px";
+                });
         }
 
         function charge(d){
