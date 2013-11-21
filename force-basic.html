@@ -24,20 +24,25 @@
             {radius: 89}
         ];
 
-        var svg = d3.select('body').selectAll('svg');
-
-        var circles = svg.selectAll("circle")
-            .data(data)
-                .enter()
-                    .append("circle")
-                    .attr("r", function(d){ return d.radius;});
 
         var force = d3.layout.force()
             .nodes(data)
             .charge(charge)
             .size([970, 540])
-            .on("tick", tick)
-            .start();
+            .on("tick", tick);
+
+        var color = d3.scale.category20();
+
+        var circles = d3.select('svg').selectAll("circle")
+            .data(force.nodes())
+            .enter()
+            .append("circle")
+            .attr("r", function(d) {
+                return d.radius;
+            })
+            .attr("fill",function(d,i){return color(i);});
+
+        force.start();
 
         function tick() {
             circles.attr("cx", function(d) {
@@ -49,7 +54,7 @@
 
         function charge(d){
             var diameter = d.radius * 2;
-            return -(diameter * 8);
+            return -(diameter * 10);
         }
 
     </script>

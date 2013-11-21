@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html>
+  <body>
+    <svg width="1200" height="540" style="background-color:#fff;margin:auto;display:block;border:1px solid #666">
+      <line x1="600" y1="0"
+            x2="600" y2="540"
+            stroke="#666"
+            stroke-width="2"/>
+      <line x1="300" y1="0"
+            x2="300" y2="540"
+            stroke="#666"
+            stroke-width="2"/>
+      <line x1="900" y1="0"
+            x2="900" y2="540"
+            stroke="#666"
+            stroke-width="2"/>
+    </svg>
+
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+    <script type="text/javascript">
+
+var data = [
+  {name: 'Caramel Apple', bias: 1.00, volume: 21},
+  {name: 'apple cider', bias: 0.79, volume: 29},
+  {name: 'apple juice', bias: 0.77, volume: 26},
+  {name: 'Apple Cake', bias: 0.71, volume: 14},
+  {name: 'apple pie', bias: 0.62, volume: 42},
+  {name: 'Jony Ive ', bias:-0.40, volume: 10},
+  {name: 'Apple\'s', bias:-0.53, volume: 80},
+  {name: 'Mac Pro', bias:-0.60, volume: 15},
+  {name: 'Mavericks', bias:-0.60, volume: 35},
+  {name: 'iPad Air ', bias:-0.63, volume: 27},
+  {name: 'iOS 7', bias:-0.65, volume: 17},
+  {name: 'Apple\'s new', bias:-0.75, volume: 16},
+  {name: 'OS X Mavericks ', bias:-0.75, volume: 16},
+  {name: 'Business ', bias:-0.85, volume: 13},
+  {name: 'Apple MacBook Pro', bias:-0.95, volume: 39},
+  {name: 'center', bias:0, volume: 10},
+  {name: 'center-left', bias:-0.5, volume: 30},
+  {name: 'left', bias:-1, volume: 30},
+  {name: 'right', bias:1, volume: 30},
+  {name: 'center-right', bias:0.5, volume: 30},
+];
+
+
+var w = 1200,
+    h = 540;
+
+var color = d3.scale.linear()
+    .domain([-1, 1])
+    .range(["hsl(337, 62%, 51%)", "hsl(195, 100%, 39%)"])
+    .interpolate(d3.interpolateHsl);
+
+var xScale = d3.scale.linear()
+    .domain([-1, 1])
+    .range([300, 900]); /*use half the width of the svg - HACK to prevent text elements going off the svg*/
+
+data = data.map(function(data){
+  data.xBiased = xScale(data.bias);
+  data.yRandom = Math.round(Math.random() * h);
+  return data;
+});
+
+var svg = d3.select('svg');
+
+var force = d3.layout.force()
+    .nodes(data)
+    .charge(function(d){ return d.volume * -10; })
+    .size([w, h])
+    .on("tick", tick);
+
+var circles = svg.selectAll('circle')
+    .data(force.nodes())
+    .enter()
+    .append('circle')
+    .text(function(d) { return d.name; })
+    .attr('stroke', function(d){ return color(d.bias);})
+    .attr('fill', '#fff')
+    .attr('cx', function(d) {
+      return d.xBiased;
+    })
+    .attr('cy', function(d){ return d.yRandom; })
+    .attr('r', function(d){ return d.volume; });
+
+
+var words = svg.selectAll('text')
+    .data(force.nodes())
+    .enter()
+    .append('text')
+    .text(function(d) { return d.name; })
+    .attr('fill', function(d){ return color(d.bias);})
+    .attr('font-size', function(d){return d.volume;})
+    .attr('x', function(d) {
+      d.clientWidth = this.clientWidth;
+      return d.xBiased - d.clientWidth / 2;
+    })
+    .attr('y', function(d){ return d.yRandom; });
+
+force.start();
+
+function tick(e) {
+    circles
+      .each(function(d){
+        d.x += d.bias * (e.alpha * 20 /*magic number 20*/);
+        if(d.name === 'center'){
+          console.log(d.x);
+        }
+      })
+      .attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; });
+
+    words
+      .each(function(d){
+        d.x += d.bias * (e.alpha * 20 /*magic number 20*/);
+        if(d.name === 'center'){
+          console.log(d.x);
+        }
+      })
+      .attr("x", function(d) { return d.x - (d.clientWidth / 2); })
+      .attr("y", function(d) { return d.y; });
+}
+
+    </script>
+  </body>
+</html>
+
+
+
+
+<!--
+<!DOCTYPE html>
+<html>
+  <body>
+    <svg width="1200" height="540" style="background-color:#fff;margin:auto;display:block;border:1px solid #666">
+      <line x1="600" y1="0"
+            x2="600" y2="540"
+            stroke="#666"
+            stroke-width="2"/>
+      <line x1="300" y1="0"
+            x2="300" y2="540"
+            stroke="#666"
+            stroke-width="2"/>
+      <line x1="900" y1="0"
+            x2="900" y2="540"
+            stroke="#666"
+            stroke-width="2"/>
+    </svg>
+
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+    <script type="text/javascript">
+
+var data = [
+  // {name: 'Caramel Apple', bias: 1.00, volume: 21},
+  // {name: 'apple cider', bias: 0.79, volume: 29},
+  // {name: 'apple juice', bias: 0.77, volume: 26},
+  // {name: 'Apple Cake', bias: 0.71, volume: 14},
+  // {name: 'apple pie', bias: 0.62, volume: 42},
+  // {name: 'Jony Ive ', bias:-0.40, volume: 10},
+  // {name: 'Apple\'s', bias:-0.53, volume: 80},
+  // {name: 'Mac Pro', bias:-0.60, volume: 15},
+  // {name: 'Mavericks', bias:-0.60, volume: 35},
+  // {name: 'iPad Air ', bias:-0.63, volume: 27},
+  // {name: 'iOS 7', bias:-0.65, volume: 17},
+  // {name: 'Apple\'s new', bias:-0.75, volume: 16},
+  // {name: 'OS X Mavericks ', bias:-0.75, volume: 16},
+  // {name: 'Business ', bias:-0.85, volume: 13},
+  // {name: 'Apple MacBook Pro', bias:-0.95, volume: 39},
+  {name: 'center', bias:0, volume: 20},
+  {name: 'center-left', bias:-0.5, volume: 20},
+  {name: 'left', bias:-1, volume: 20},
+  {name: 'right', bias:1, volume: 20},
+  {name: 'center-right', bias:0.5, volume: 20},
+];
+
+var w = 1200,
+    h = 540;
+
+var colourScale = d3.scale.linear()
+    .domain([-1, 1])
+    .range(["hsl(337, 62%, 51%)", "hsl(195, 100%, 39%)"])
+    .interpolate(d3.interpolateHsl);
+
+var force = d3.layout.force()
+    .nodes(data)
+    .charge(charge)
+    .size([w, h])
+    .on("tick", tick);
+
+// var textNodes = d3.select('svg').selectAll('text')
+//     .data(force.nodes())
+//     .enter()
+//     .append('text')
+//     .text(function(d) { return d.name; })
+//     .attr('fill', function(d){ return colourScale(d.bias);})
+//     .attr('font-size', function(d){return d.volume;});
+
+var circles = d3.select('svg').selectAll('circle')
+    .data(force.nodes())
+    .enter()
+    .append('circle')
+    .text(function(d) { return d.name; })
+    .style('fill', function(d){ return colourScale(d.bias);});
+
+force.start();
+
+function tick(e) {
+  //e.alpha is ~0.099 running to 0.05 (summing alpha gives ~10)
+  console.log(e.alpha);
+
+  // textNodes.each(function(d) {
+  //     var bias = d.bias * (e.alpha * 10);
+  //     d.x += bias;
+  //     if(!d.haveAppliedClientWidthOffset){
+  //       d.x -= (this.clientWidth / 2);
+  //       d.haveAppliedClientWidthOffset = true;
+  //     }
+  //   }).attr("x", function(d) {
+  //       return d.x;
+  //   }).attr("y", function(d) {
+  //       return d.y;
+  //   });
+  circles
+    .each(function(d){
+      d.x += (d.bias * );
+    })
+    .attr("r", 20)
+    .attr("cx", function(d) {
+      return d.x - (this.clientWidth / 2);
+    }).attr("cy", function(d) {
+      return d.y;
+    });
+}
+
+function charge(d){
+    return -(d.volume * 40);
+}
+// textNodes
+//   .enter()
+//   .append('text')
+//   .text(function(d) { return d.name; })
+//   .attr('fill', function(d){ return colourScale(d.bias);})
+//   .attr('font-size', function(d){return d.volume;})
+//   .attr('x', function(d) {
+//     return xScale(d.bias) - (this.clientWidth / 2); /*take away half clintWidth to center the text on the x coord.*/
+//   })
+//   //todo - collision detection on this
+//   .attr('y', function(){ return Math.round(Math.random() * h);});
+
+    </script>
+  </body>
+</html>
+ -->
