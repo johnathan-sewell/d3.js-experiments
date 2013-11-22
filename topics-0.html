@@ -66,7 +66,7 @@ var svg = d3.select('svg');
 var textElements = svg.selectAll('text')
     .data(data);
 
-var takenSpaces = [];
+var takenBoxes = [];
 
 function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
     var d = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4),
@@ -87,23 +87,23 @@ function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
 }
 
 function boxIntersect(a,b){
-    var result = a[2]>=b[0] && a[0]<=b[2] && a[3]>=b[1] && a[1]<=b[3];
+    var result = a.x2>=b.x1 && a.x1<=b.x2 && a.y2>=b.y1 && a.y1<=b.y2;
     return result;
 }
 
 function isBoxInContainer(box) {
-  var result = box[0] > 0 && box[1] > 0 && box[2] < this.canvasWidth && box[3] < canvasHeight;
+  var result = box.x1 > 0 && box.y1 > 0 && box.x2 < this.canvasWidth && box.y2 < canvasHeight;
   return result;
 };
 
 function isSpaceAvailable(box) {
-  var isAvailable = !(takenSpaces).some(function(ts) {
+  var isAvailable = !(takenBoxes).some(function(takenBox) {
     // check line intersect as well as box intersect to cover cases where the box is inside a taken space
-    return lineIntersection(box[0], box[1] + 1, box[2], box[1] - 1, ts[0], ts[1], ts[2], ts[1]) || // t
-    lineIntersection(box[2] + 1, box[1], box[2] - 1, box[3], ts[2], ts[1], ts[2], ts[3]) || // r
-    lineIntersection(box[2], box[3] + 1, box[0], box[3] - 1, ts[2], ts[3], ts[0], ts[3]) || // b
-    lineIntersection(box[0] + 1, box[3], box[0] - 1, box[1], ts[0], ts[3], ts[0], ts[1]) || // l
-    boxIntersect(box, ts);
+    return lineIntersection(box.x1, box.y1 + 1, box.x2, box.y1 - 1, takenBox.x1, takenBox.y1, takenBox.x2, takenBox.y1) || // t
+    lineIntersection(box.x2 + 1, box.y1, box.x2 - 1, box.y2, takenBox.x2, takenBox.y1, takenBox.x2, takenBox.y2) || // r
+    lineIntersection(box.x2, box.y2 + 1, box.x1, box.y2 - 1, takenBox.x2, takenBox.y2, takenBox.x1, takenBox.y2) || // b
+    lineIntersection(box.x1 + 1, box.y2, box.x1 - 1, box.y1, takenBox.x1, takenBox.y2, takenBox.x1, takenBox.y1) || // l
+    boxIntersect(box, takenBox);
   });
 
   return isAvailable;
@@ -120,9 +120,9 @@ function findPositionForWord(data) {
         x2 = x1 + data.width,
         y2 = y1 + data.height;
 
-    testbox = [x1, y1, x2, y2];
+    testbox = { x1: x1, y1: y1, x2: x2, y2: y2 };
     if (this.isBoxInContainer(testbox) && this.isSpaceAvailable(testbox)) {
-      takenSpaces.push(testbox);
+      takenBoxes.push(testbox);
       found = true;
       break;
     }
@@ -132,7 +132,7 @@ function findPositionForWord(data) {
     console.warn('could not find space for data');
   }
 
-  return { x: testbox[0], y: testbox[1] };
+  return testbox;
 }
 
 // initial placement
@@ -159,11 +159,8 @@ textElements
     //calculate layout for topic
     d.width = this.clientWidth;
     d.height = this.clientHeight;
-if(d.name === 'Mac Pro'){
-  debugger;
-}
-    d.position = findPositionForWord(d);
-    this.setAttribute('y', d.position.y + d.height /* because <text/> y starts at the bottom of the element */);
+    var position = findPositionForWord(d);
+    this.setAttribute('y', position.y1 + d.height /* because <text/> y starts at the bottom of the element */);
   });
 
     </script>
