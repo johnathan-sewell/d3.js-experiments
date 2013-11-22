@@ -1,8 +1,8 @@
 
 <!DOCTYPE html>
 <html>
-  <body>
-    <svg width="1200" height="540" style="background-color:#fff;margin:auto;display:block;border:1px solid #666">
+  <body style="background-color:#666;margin:10px">
+    <svg width="1200" height="540" style="background-color:#fff;">
       <line x1="600" y1="0"
             x2="600" y2="540"
             stroke="#666"
@@ -22,30 +22,35 @@
     <script type="text/javascript">
 
 var data = [
-  {name: 'Caramel Apple', bias: 1.00, volume: 21},
-  {name: 'apple cider', bias: 0.79, volume: 29},
-  {name: 'apple juice', bias: 0.77, volume: 26},
-  {name: 'Apple Cake', bias: 0.71, volume: 14},
-  {name: 'apple pie', bias: 0.62, volume: 42},
-  {name: 'Jony Ive ', bias:-0.40, volume: 10},
+  // {name: 'Caramel Apple', bias: 1.00, volume: 21},
+  // {name: 'apple cider', bias: 0.79, volume: 29},
+  // {name: 'apple juice', bias: 0.77, volume: 26},
+  // {name: 'Apple Cake', bias: 0.71, volume: 14},
+  // {name: 'apple pie', bias: 0.62, volume: 42},
+  // {name: 'Jony Ive ', bias:-0.40, volume: 10},
   {name: 'Apple\'s', bias:-0.53, volume: 80},
   {name: 'Mac Pro', bias:-0.60, volume: 15},
-  {name: 'Mavericks', bias:-0.60, volume: 35},
-  {name: 'iPad Air ', bias:-0.63, volume: 27},
-  {name: 'iOS 7', bias:-0.65, volume: 17},
-  {name: 'Apple\'s new', bias:-0.75, volume: 16},
-  {name: 'OS X Mavericks ', bias:-0.75, volume: 16},
-  {name: 'Business ', bias:-0.85, volume: 13},
-  {name: 'Apple MacBook Pro', bias:-0.95, volume: 39},
-  {name: 'center', bias:0, volume: 30},
-  {name: 'center-left', bias:-0.5, volume: 30},
-  {name: 'left', bias:-1, volume: 30},
-  {name: 'right', bias:1, volume: 30},
-  {name: 'center-right', bias:0.5, volume: 30},
+  // {name: 'Mavericks', bias:-0.60, volume: 35},
+  // {name: 'iPad Air ', bias:-0.63, volume: 27},
+  // {name: 'iOS 7', bias:-0.65, volume: 17},
+  // {name: 'Apple\'s new', bias:-0.75, volume: 16},
+  // {name: 'OS X Mavericks ', bias:-0.75, volume: 16},
+  // {name: 'Business ', bias:-0.85, volume: 13},
+  // {name: 'Apple MacBook Pro', bias:-0.95, volume: 39},
+  // {name: 'center', bias:0, volume: 30},
+  // {name: 'center-left', bias:-0.5, volume: 30},
+  // {name: 'left', bias:-1, volume: 30},
+  // {name: 'right', bias:1, volume: 30},
+  // {name: 'center-right', bias:0.5, volume: 30},
+
+  // {name: 'Apples', bias:-0.7, volume: 30},
+  // {name: 'Pears', bias:-0.8, volume: 80},
+  // {name: 'Oranges', bias:-0.9, volume: 10},
+  // {name: 'Guavas', bias:-1, volume: 25},
 ];
 
-var w = 1200,
-    h = 540;
+var canvasWidth = 1200,
+    canvasHeight = 540;
 
 var color = d3.scale.linear()
     .domain([-1, 1])
@@ -61,18 +66,105 @@ var svg = d3.select('svg');
 var textElements = svg.selectAll('text')
     .data(data);
 
+var takenSpaces = [];
+
+function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+    var d = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4),
+        xi,yi;
+    if(d === 0){
+        return false;
+    }
+
+    xi = ((x3-x4)*(x1*y2-y1*x2)-(x1-x2)*(x3*y4-y3*x4))/d;
+    yi = ((y3-y4)*(x1*y2-y1*x2)-(y1-y2)*(x3*y4-y3*x4))/d;
+
+    if((xi < Math.min(x1,x2) || xi > Math.max(x1,x2)) ||
+       (xi < Math.min(x3,x4) || xi > Math.max(x3,x4))){
+        return false;
+    }
+
+    return true;
+}
+
+function boxIntersect(a,b){
+    var result = a[2]>=b[0] && a[0]<=b[2] && a[3]>=b[1] && a[1]<=b[3];
+    return result;
+}
+
+function isBoxInContainer(box) {
+  var result = box[0] > 0 && box[1] > 0 && box[2] < this.canvasWidth && box[3] < canvasHeight;
+  return result;
+};
+
+function isSpaceAvailable(box) {
+  var isAvailable = !(takenSpaces).some(function(ts) {
+    // check line intersect as well as box intersect to cover cases where the box is inside a taken space
+    return lineIntersection(box[0], box[1] + 1, box[2], box[1] - 1, ts[0], ts[1], ts[2], ts[1]) || // t
+    lineIntersection(box[2] + 1, box[1], box[2] - 1, box[3], ts[2], ts[1], ts[2], ts[3]) || // r
+    lineIntersection(box[2], box[3] + 1, box[0], box[3] - 1, ts[2], ts[3], ts[0], ts[3]) || // b
+    lineIntersection(box[0] + 1, box[3], box[0] - 1, box[1], ts[0], ts[3], ts[0], ts[1]) || // l
+    boxIntersect(box, ts);
+  });
+
+  return isAvailable;
+};
+function findPositionForWord(data) {
+  var startY = 1,
+    endY = canvasHeight,
+    found = false,
+    testbox;
+
+  for (i = startY; i < endY; i++) {
+    var x1 = data.x,
+        y1 = i,
+        x2 = x1 + data.width,
+        y2 = y1 + data.height;
+
+    testbox = [x1, y1, x2, y2];
+    if (this.isBoxInContainer(testbox) && this.isSpaceAvailable(testbox)) {
+      takenSpaces.push(testbox);
+      found = true;
+      break;
+    }
+  }
+
+  if(!found){
+    console.warn('could not find space for data');
+  }
+
+  return { x: testbox[0], y: testbox[1] };
+}
+
+// initial placement
+//-------------------
 textElements
   .enter()
   .append('text')
-  .text(function(d) { return d.name; })
+  .text(function(d) { return d.name; })   //elements seem to be added to the page as soon as you set attributes
   .attr('fill', function(d){ return color(d.bias);})
   .attr('font-size', function(d){return d.volume;})
   .attr('x', function(d) {
-    return xScale(d.bias) - (this.clientWidth / 2); /*take away half clintWidth to center the text on the x coord.*/
+    d.x = xScale(d.bias) - (this.clientWidth / 2); /*take away half clintWidth to center the text on the x coord.*/
+    return d.x;
   })
-  //todo - collision detection on this
-  .attr('y', function(){ return Math.round(Math.random() * h);});
+  .attr('y', function(d) {
+    d.y = Math.round(Math.random() * canvasHeight);
+    return d.y;
+  });
 
+// layout
+//--------
+textElements
+  .each(function(d) {
+    //calculate layout for topic
+    d.width = this.clientWidth;
+    d.height = this.clientHeight;
+if(d.name === 'Mac Pro'){
+  debugger;
+}
+    d.position = findPositionForWord(d);
+    this.setAttribute('y', d.position.y + d.height /* because <text/> y starts at the bottom of the element */);
+  });
 
     </script>
   </body>
