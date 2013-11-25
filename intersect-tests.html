@@ -1,0 +1,180 @@
+<!--
+bugs to solve:
+  - intersect of topics of same size and bias reports false positives
+  - improve efficiency of collision detection
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+  <body style="background-color:#eee;margin:10px">
+    <style>
+      span{
+        position: absolute;
+        display: block;
+        background-color: #ccc;
+        height: 50px;
+        width: 50px;
+        text-align: center;
+        line-height: 50px;
+        border: 1px solid #000;
+      }
+    </style>
+    <div id='container' style="width:1200px; height:540px; background-color:#fff;position:relative">
+
+    </div>
+
+
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js" charset="utf-8"></script>
+
+    <script type="text/javascript">
+      var takenBoxes = [];
+
+      function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+          var d = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4),
+              xi,yi;
+          if(d === 0){
+              return false;
+          }
+
+          xi = ((x3-x4)*(x1*y2-y1*x2)-(x1-x2)*(x3*y4-y3*x4))/d;
+          yi = ((y3-y4)*(x1*y2-y1*x2)-(y1-y2)*(x3*y4-y3*x4))/d;
+
+          if((xi < Math.min(x1,x2) || xi > Math.max(x1,x2)) ||
+             (xi < Math.min(x3,x4) || xi > Math.max(x3,x4))){
+              return false;
+          }
+
+          return true;
+      }
+
+      function boxIntersect(a,b){
+          var result = a.x2>=b.x1 && a.x1<=b.x2 && a.y2>=b.y1 && a.y1<=b.y2;
+          return result;
+      }
+
+      function isBoxInContainer(box) {
+        var result = box.x1 > 0 && box.y1 > 0 && box.x2 < this.containerWidth && box.y2 < containerHeight;
+        return result;
+      };
+
+      // function isSpaceAvailable(box) {
+      //   var isAvailable = !(takenBoxes).some(function(takenBox) {
+      //     // check line intersect as well as box intersect to cover cases where the box is inside a taken space
+      //     return lineIntersection(box.x1, box.y1 + 1, box.x2, box.y1 - 1, takenBox.x1, takenBox.y1, takenBox.x2, takenBox.y1) || // t
+      //     lineIntersection(box.x2 + 1, box.y1, box.x2 - 1, box.y2, takenBox.x2, takenBox.y1, takenBox.x2, takenBox.y2) || // r
+      //     lineIntersection(box.x2, box.y2 + 1, box.x1, box.y2 - 1, takenBox.x2, takenBox.y2, takenBox.x1, takenBox.y2) || // b
+      //     lineIntersection(box.x1 + 1, box.y2, box.x1 - 1, box.y1, takenBox.x1, takenBox.y2, takenBox.x1, takenBox.y1) || // l
+      //     boxIntersect(box, takenBox);
+      //   });
+
+      //   return isAvailable;
+      // };
+
+      function isSpaceAvailable(box) {
+        var isAvailable = (takenBoxes).every(function(takenBox) {
+          //check for overlap
+          // http://stackoverflow.com/questions/306316/determine-if-two-rectangles-overlap-each-other
+          // http://silentmatt.com/rectangle-intersection/
+
+          //A's left edge is to the right of B's right edge
+          //A's right edge is to the left of the B's left edge
+          var noHorizontalIntersect = (box.x1 > takenBox.x2 || box.x2 < takenBox.x1)
+
+          //A's top edge is below B's bottom  edge
+          //A's bottom edge is above B's top edge
+          var noVerticalIntersect = (box.y1 > takenBox.y2 || box.y2 < takenBox.y1);
+
+          return noVerticalIntersect || noHorizontalIntersect;
+
+        });
+
+        return isAvailable;
+      };
+
+      function elementToBox($el){
+        var box = {
+          x1: $el.position().left,
+          y1: $el.position().top,
+          x2: $el.position().left + $el.width(),
+          y2: $el.position().top + $el.height()
+        };
+        return box;
+      }
+
+      function test($el){
+          var box= elementToBox($el);
+          if(!isSpaceAvailable(box)){
+            $el.css('background-color', 'maroon');
+          }
+      }
+
+      var topVal = 250,
+          leftVal = 500;
+
+
+      $('#container').append($('<span id="1"></span>').css({
+        'top': topVal,
+        'left': leftVal,
+        'background-color': 'steelblue'
+      }));
+
+      takenBoxes.push(elementToBox($('span#1')));
+
+      //above
+      $('#container').append($('<span class="testBox">').css({'top': topVal - 150 + 'px', 'left': leftVal + 'px'}));
+      //below
+      $('#container').append($('<span class="testBox">').css({'top': topVal + 150 + 'px', 'left': leftVal + 'px'}));
+      //left
+      $('#container').append($('<span class="testBox">').css({'top': topVal + 'px', 'left': leftVal - 150 + 'px'}));
+      //right
+      $('#container').append($('<span class="testBox">').css({'top': topVal + 'px', 'left': leftVal + 150 + 'px'}));
+
+      //above right
+      $('#container').append($('<span class="testBox">').css({'top': topVal - 150 + 'px', 'left': leftVal + 150 + 'px'}));
+      //above left
+      $('#container').append($('<span class="testBox">').css({'top': topVal - 150 + 'px', 'left': leftVal - 150 + 'px'}));
+
+      //below left
+      $('#container').append($('<span class="testBox">').css({'top': topVal + 150 + 'px', 'left': leftVal - 150 + 'px'}));
+      //below right
+      $('#container').append($('<span class="testBox">').css({'top': topVal + 150 + 'px', 'left': leftVal + 150 + 'px'}));
+
+//intersects
+      //above
+      $('#container').append($('<span class="testBox">').css({'top': topVal - 50 + 'px', 'left': leftVal + 'px'}));
+      //below
+      $('#container').append($('<span class="testBox">').css({'top': topVal + 50 + 'px', 'left': leftVal + 'px'}));
+      //left
+      $('#container').append($('<span class="testBox">').css({'top': topVal + 'px', 'left': leftVal - 50 + 'px'}));
+      //right
+      $('#container').append($('<span class="testBox">').css({'top': topVal + 'px', 'left': leftVal + 50 + 'px'}));
+
+      //above right
+      $('#container').append($('<span class="testBox">').css({'top': topVal - 50 + 'px', 'left': leftVal + 50 + 'px'}));
+      //above left
+      $('#container').append($('<span class="testBox">').css({'top': topVal - 50 + 'px', 'left': leftVal - 50 + 'px'}));
+
+      //below left
+      $('#container').append($('<span class="testBox">').css({'top': topVal + 50 + 'px', 'left': leftVal - 50 + 'px'}));
+      //below right
+      $('#container').append($('<span class="testBox">').css({'top': topVal + 50 + 'px', 'left': leftVal + 50 + 'px'}));
+
+      //inside
+      $('#container').append($('<span class="testBox">').css({'top': topVal + 10 + 'px', 'left': leftVal + 10 + 'px', 'width': '30px', 'height': '30px'}));
+
+
+
+      $('span.testBox').each(function(i, el){
+        var $el = $(el);
+        //$el.text($el.position().top + ',' + $el.position().left);
+      })
+
+      $('span.testBox').each(function(i, el){
+        test($(el));
+      })
+
+
+    </script>
+  </body>
+</html>
