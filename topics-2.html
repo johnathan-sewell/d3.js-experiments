@@ -9,6 +9,9 @@ bugs to solve:
   </head>
   <body style="background-color:#eee;margin:10px">
     <style>
+      body{
+        font-family: arial, sans-serif;
+      }
       .topic{
         position: absolute;
         display: block;
@@ -16,23 +19,28 @@ bugs to solve:
       #segmentA{
         position: absolute;
         left:62px;
-        top: 492px;
+        top: 500px;
         color: hsl(337, 62%, 51%);
-        font-size: 22px;
+        font-size: 18px;
       }
       #segmentB{
         position: absolute;
         right:62px;
-        top: 492px;
+        top: 500px;
         color: hsl(195, 100%, 39%);
-        font-size: 22px;
+        font-size: 18px;
+      }
+      .legend{
+        position:relative;
+        bottom:-520px;
+        left:100px;
       }
       .hidden{
         visibility: hidden;
       }
     </style>
+
     <div id='container' style="width:1200px; height:540px; background-color:#fff;position:relative">
-      <div style="background:linear-gradient(45deg, hsl(337, 62%, 51%), hsl(195, 100%, 39%));height:10px;position:relative;bottom:-520px;width:90%;margin:0 auto"></div>
       <span id="segmentA">Technology</span>
       <span id="segmentB">Food & Drinks</span>
     </div>
@@ -65,15 +73,31 @@ var data = [
 var containerWidth = 1200,
     containerHeight = 540;
 
+var largestTopic = _(data).max(function(d) {
+  return d.volume;
+});
+var smallestTopic = _(data).min(function(d) {
+  return d.volume;
+});
+
+// d3.interpolateHsl
+// d3.interpolateHcl
+// d3.interpolateLab
+// d3.interpolateRgb
+var colorInterpolator = d3.interpolateHcl;
+
 var color = d3.scale.linear()
     .domain([-1, 1])
     .range(["hsl(337, 62%, 51%)", "hsl(195, 100%, 39%)"])
-    .interpolate(d3.interpolateHsl);
+    .interpolate(colorInterpolator);
 
 var xScale = d3.scale.linear()
-    .domain([-1, 1])
-    //.range([300, 900]); /*use less than the width of the container - HACK to prevent text elements being cut off*/
-    .range([200, 1000]); /*use less than the width of the container - HACK to prevent text elements being cut off*/
+  .domain([-1, 1])
+  .range([200, 1000]); /*use less than the width of the container - HACK to prevent text elements being cut off*/
+
+var fontScale = d3.scale.linear()
+  .domain([smallestTopic.volume, largestTopic.volume])
+  .range([10, 50]);
 
 var takenBoxes = [];
 
@@ -119,14 +143,6 @@ function positionBoxInRange(yRange, box, width, height) {
     box.y2 = candidateY + height;
 
     //debug box
-    // d3.select('#container')
-    //   .append('div')
-    //   .style('left', box.x1 + 'px')
-    //   .style('top', box.y1 + 'px')
-    //   .style('position', 'absolute')
-    //   .style('width', width + 'px')
-    //   .style('height', height + 'px')
-    //   .style('border', '1px solid #000');
 
     if (isSpaceAvailable(box)) {
       takenBoxes.push(box);
@@ -160,6 +176,7 @@ function position(box) {
 }
 
 function layout(topics) {
+  //layout is most efficient when starting with larges objects (the jar of golf balls and sand)
   topics.sort(function($a, $b) {
     return $b.data().volume - $a.data().volume;
   })
@@ -198,13 +215,15 @@ var $container = $('#container');
 // add to dom so we can get width and height
 var topics = [];
 data.forEach(function(data){
+  var fontSize = fontScale(data.volume);
+
   var $topic = $('<span>')
   .addClass('topic')
   //.addClass('hidden')
   .text(data.name)
   .data(data)
   .css('color', color(data.bias))
-  .css('font-size', data.volume + 'px');
+  .css('font-size', fontSize + 'px');
 
   topics.push($topic);
 });
@@ -212,6 +231,33 @@ $container.append(topics);
 
 //layout
 layout(topics);
+
+
+//legend
+var legendWidth = 1000,
+    legendHeight = 10,
+    legendStep = 10;
+
+var range = _.range(0, legendWidth, legendStep);
+
+var color = d3.scale.linear()
+    .domain([0, legendWidth])
+    .range(["hsl(337, 62%, 51%)", "hsl(195, 100%, 39%)"])
+    .interpolate(colorInterpolator);
+
+var g = d3.select("#container").append("svg")
+  .attr('class', 'legend')
+  .attr("width", legendWidth)
+  .attr("height", legendHeight)
+  .append("g")
+  .selectAll("rect")
+  .data(range)
+    .enter()
+    .append("rect")
+    .attr("x", String)
+    .attr("width", legendStep)
+    .attr("height", legendHeight)
+    .style("fill", color);
 
     </script>
   </body>
