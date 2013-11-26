@@ -9,7 +9,7 @@ bugs to solve:
   </head>
   <body style="background-color:#eee;margin:10px">
     <style>
-      span{
+      .topic{
         position: absolute;
         display: block;
       }
@@ -27,22 +27,11 @@ bugs to solve:
         color: hsl(195, 100%, 39%);
         font-size: 22px;
       }
+      .hidden{
+        visibility: hidden;
+      }
     </style>
     <div id='container' style="width:1200px; height:540px; background-color:#fff;position:relative">
-<!--       <svg>
-        <line x1="600" y1="0"
-              x2="600" y2="540"
-              stroke="#666"
-              stroke-width="2"/>
-        <line x1="300" y1="0"
-              x2="300" y2="540"
-              stroke="#666"
-              stroke-width="2"/>
-        <line x1="900" y1="0"
-              x2="900" y2="540"
-              stroke="#666"
-              stroke-width="2"/>
-      </svg> -->
       <div style="background:linear-gradient(45deg, hsl(337, 62%, 51%), hsl(195, 100%, 39%));height:10px;position:relative;bottom:-520px;width:90%;margin:0 auto"></div>
       <span id="segmentA">Technology</span>
       <span id="segmentB">Food & Drinks</span>
@@ -50,6 +39,7 @@ bugs to solve:
 
 
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="http://underscorejs.org/underscore-min.js" charset="utf-8"></script>
 
     <script type="text/javascript">
@@ -82,12 +72,8 @@ var color = d3.scale.linear()
 
 var xScale = d3.scale.linear()
     .domain([-1, 1])
-    .range([300, 900]); /*use less than the width of the container - HACK to prevent text elements being cut off*/
-
-var container = d3.select('#container');
-
-var textElements = container.selectAll('span.topic')
-    .data(data);
+    //.range([300, 900]); /*use less than the width of the container - HACK to prevent text elements being cut off*/
+    .range([200, 1000]); /*use less than the width of the container - HACK to prevent text elements being cut off*/
 
 var takenBoxes = [];
 
@@ -120,38 +106,8 @@ function isSpaceAvailable(box) {
   });
 };
 
-function findPositionForWord(label, x, y, width, height) {
-
-  var yRange,
-    found = false,
-    testbox;
-
-  testbox = {
-    x1: x,
-    y1: y,
-    x2: x + width,
-    y2: y + height
-  };
-
-  yRange = _.range(0, containerHeight-height, 10); //step could be used to speedup layout calculations
-
-  var centralYPositions =yRange.slice(Math.floor(.33 * yRange.length), Math.floor(.66 * yRange.length));
-  found = isPositionAvailable(centralYPositions, testbox, width, height);
-
-  if(!found){
-    var outerYPositions = yRange.slice(0, Math.floor(.33 * yRange.length)).concat(yRange.slice(Math.floor(.66 * yRange.length), yRange.length));
-    found = isPositionAvailable(outerYPositions, testbox, width, height);
-  }
-
-  if(!found){
-    console.warn('could not find space for word ' + label);
-  }
-  console.log('placing ' + label + ' at ' + JSON.stringify(testbox));
-  return testbox;
-}
-
 //iterate the Y positions randomly and try to place the word
-function isPositionAvailable(yRange, testbox, width, height) {
+function positionBoxInRange(yRange, box, width, height) {
   while (yRange.length > 0) {
     var randomIndex,
       candidateY;
@@ -159,58 +115,103 @@ function isPositionAvailable(yRange, testbox, width, height) {
     randomIndex = Math.floor(Math.random() * yRange.length),
     candidateY = yRange.splice(randomIndex, 1)[0]
 
-    testbox.y1 = candidateY;
-    testbox.y2 = candidateY + height;
+    box.y1 = candidateY;
+    box.y2 = candidateY + height;
 
     //debug box
     // d3.select('#container')
     //   .append('div')
-    //   .style('left', testbox.x1 + 'px')
-    //   .style('top', testbox.y1 + 'px')
+    //   .style('left', box.x1 + 'px')
+    //   .style('top', box.y1 + 'px')
     //   .style('position', 'absolute')
     //   .style('width', width + 'px')
     //   .style('height', height + 'px')
     //   .style('border', '1px solid #000');
 
-    if (isSpaceAvailable(testbox)) {
-      takenBoxes.push(testbox);
+    if (isSpaceAvailable(box)) {
+      takenBoxes.push(box);
       return true;
     }
   }
   return false;
 }
 
+function position(box) {
+  var yRange,
+    height, width,
+    found = false;
+
+  height = box.y2 - box.y1;
+  width = box.x2 - box.x1;
+  yRange = _.range(0, containerHeight-height, 10); //step could be used to speedup layout calculations
+
+  var centralYPositions =yRange.slice(Math.floor(.33 * yRange.length), Math.floor(.66 * yRange.length));
+  found = positionBoxInRange(centralYPositions, box, width, height);
+
+  if(!found){
+    var outerYPositions = yRange.slice(0, Math.floor(.33 * yRange.length)).concat(yRange.slice(Math.floor(.66 * yRange.length), yRange.length));
+    found = positionBoxInRange(outerYPositions, box, width, height);
+  }
+
+  if(!found){
+    return false;
+  }
+  return box;
+}
+
+function layout(topics) {
+  topics.sort(function($a, $b) {
+    return $b.data().volume - $a.data().volume;
+  })
+
+  topics.forEach(function($topic){
+    var width, height, box, positionedBox;
+
+    left = xScale($topic.data().bias) - ($topic.outerWidth() * .5); /*shift to left by .5 for centering*/
+    width = $topic.outerWidth(),
+    height = $topic.outerHeight(),
+
+    box = {
+      x1: left,
+      y1: 0,
+      x2: left + width,
+      y2: height
+    };
+
+    positionedBox = position(box);
+
+    if (!position) {
+      console.warn('could not find space for word ' + d.name);
+      return;
+    }
+
+    $topic.css({
+      'top': positionedBox.y1 + 'px',
+      'left': positionedBox.x1 + 'px',
+    });
+  });
+}
+
 // initial placement
 //-------------------
-textElements
-  .enter()
-  .append('span')
-  .attr('class', 'topic')
-  .text(function(d) { return d.name; })   //elements seem to be added to the page as soon as you set attributes
-  .style('color', function(d){ return color(d.bias);})
-  .style('font-size', function(d){return d.volume + 'px';})
-  .style('left', function(d) {
-    d.x = xScale(d.bias) - (this.clientWidth * .5); /*shift to left by .5 clientwidth to center*/
-    return d.x + 'px';
-  })
-  .style('top', function(d) {
-    d.y = Math.floor(Math.random() * (containerHeight - this.clientHeight)); //initial y position is random
-    return d.y + 'px';
-  });
+var $container = $('#container');
+// add to dom so we can get width and height
+var topics = [];
+data.forEach(function(data){
+  var $topic = $('<span>')
+  .addClass('topic')
+  //.addClass('hidden')
+  .text(data.name)
+  .data(data)
+  .css('color', color(data.bias))
+  .css('font-size', data.volume + 'px');
 
-// layout
-//--------
-textElements
-  .sort(function(a, b) {
-      return b.volume - a.volume;
-  })
-  .each(function(d) {
-    d.width = this.clientWidth;
-    d.height = this.clientHeight;
+  topics.push($topic);
+});
+$container.append(topics);
 
-    var position = findPositionForWord(d.name, d.x, d.y, d.width, d.height);
-    d3.select(this).style('top', position.y1 + 'px');
-  });
+//layout
+layout(topics);
 
     </script>
   </body>
